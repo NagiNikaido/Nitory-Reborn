@@ -38,8 +38,9 @@ defmodule Nitory.MixProject do
   defp deps do
     [
       {:burrito, "~> 1.0"},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:depscheck, "~> 1.0.11", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
@@ -55,9 +56,7 @@ defmodule Nitory.MixProject do
       {:bandit, "~> 1.5"},
       {:ergo, "~> 1.0"},
       {:ok, "~> 2.3"},
-      # {:nestru, "~> 1.0"},
       {:flint, "~> 0.6.0"},
-      # {:flint, github: "acalejos/flint", ref: "ba78587cad8d24d1031e8e46d8bb783816c7c3f8"},
       {:typed_ecto_schema, "~> 0.4", runtime: false}
     ]
   end
@@ -83,10 +82,10 @@ defmodule Nitory.MixProject do
         steps: [:assemble, &Burrito.wrap/1],
         burrito: [
           targets: [
-            # macos: [os: :darwin, cpu: :x86_64],
-            # macos_silicon: [os: :darwin, cpu: :aarch64],
-            linux: [os: :linux, cpu: :x86_64]
-            # windows: [os: :windows, cpu: :x86_64]
+            macos: [os: :darwin, cpu: :x86_64],
+            macos_silicon: [os: :darwin, cpu: :aarch64],
+            linux: [os: :linux, cpu: :x86_64],
+            windows: [os: :windows, cpu: :x86_64]
           ]
         ]
       ]
