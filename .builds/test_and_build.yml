@@ -1,0 +1,41 @@
+image: archlinux
+packages:
+    - elixir
+    - erlang
+    - zig
+    - 7zip
+
+sources:
+    - https://git.sr.ht/~naginikaido/nitory-reborn
+
+artifacts:
+    - nitory-reborn/burrito_out/nitory_linux
+    - nitory-reborn/burrito_out/nitory_macos
+    - nitory-reborn/burrito_out/nitory_macos_silicon
+    - nitory-reborn/burrito_out/nitory_windows.exe
+ 
+tasks:
+    - setup: |
+        export LC_ALL=en_US.UTF-8
+        cd nitory-reborn
+        mix local.hex --force
+        mix deps.get
+    - test: |
+        export LC_ALL=en_US.UTF-8
+        cd nitory-reborn
+        mix test
+    - build: |
+        export LC_ALL=en_US.UTF-8
+        cd nitory-reborn
+        MIX_ENV=prod mix release
+              
+triggers:
+    - action: email
+      condition: always
+      to: NagiNikaido <naginikaido@kuusouhakuchuu.cn>
+
+submitter:
+    git.sr.ht:
+        allow-refs:
+             - "refs/tags/*"
+

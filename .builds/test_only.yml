@@ -1,0 +1,30 @@
+image: archlinux
+packages:
+    - elixir
+    - erlang
+    - zig
+    - 7zip
+
+sources:
+    - https://git.sr.ht/~naginikaido/nitory-reborn
+  
+tasks:
+    - setup: |
+        export LC_ALL=en_US.UTF-8
+        cd nitory-reborn
+        mix local.hex --force
+        mix deps.get
+    - test: |
+        export LC_ALL=en_US.UTF-8
+        cd nitory-reborn
+        mix test
+              
+triggers:
+    - action: email
+      condition: failure
+      to: NagiNikaido <naginikaido@kuusouhakuchuu.cn>
+
+submitter:
+    git.sr.ht:
+        enabled: true
+
