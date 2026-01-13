@@ -1,7 +1,7 @@
 defmodule Nitory.SessionManagerTest do
   use ExUnit.Case, async: false
 
-  setup_all do
+  setup do
     start_link_supervised!(Nitory.SessionManager)
     :ok
   end
@@ -32,11 +32,7 @@ defmodule Nitory.SessionManagerTest do
     # require IEx
     # IEx.pry()
 
-    Phoenix.PubSub.broadcast(
-      Nitory.PubSub,
-      "session_manager",
-      {:event, msg}
-    )
+    Phoenix.PubSub.broadcast(Nitory.PubSub, "session_manager", {:event, msg})
 
     # IEx.pry()
     assert_receive {:receive, _}

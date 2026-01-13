@@ -1,136 +1,90 @@
 defmodule Nitory.ApiHandlerTest do
   use ExUnit.Case, async: false
+  use ExUnitProperties
 
-  import ExUnit.CaptureLog
-
-  setup_all do
+  setup do
     start_link_supervised!(Nitory.ApiHandler)
     :ok
   end
 
-  test "cast send_msg apis" do
-    Phoenix.PubSub.subscribe(Nitory.PubSub, "session_manager")
-    GenServer.cast(Nitory.ApiHandler, {:send_group_msg, %{group_id: 123, message: "123"}})
+  def get_proper_io(action, id, msg, msg_id)
 
-    echo =
-      receive do
-        {:api_request,
-         %{
-           action: :send_group_msg,
-           params: %Nitory.ApiHandler.SendGroupMsg.InputSpec{
-             group_id: 123,
-             message: "123"
-           },
-           echo: echo
-         }} ->
-          echo
-
-        data = _ ->
-          flunk("Received:\n #{inspect(data, pretty: true)}")
-          nil
-          # code
-      end
-
-    assert echo
-
-    Phoenix.PubSub.broadcast(
-      Nitory.PubSub,
-      "api_handler",
-      {:response,
-       Nitory.Events.Echo.new!(%{
-         status: :fail,
-         retcode: -1,
-         echo: echo
-       })}
-    )
+  def get_proper_io(:send_group_msg, id, msg, msg_id) do
+    input = {:send_group_msg, %{group_id: id, message: msg}}
+    output = %Nitory.ApiHandler.SendGroupMsg.OutputSpec{message_id: msg_id}
+    {input, output}
   end
 
-  test "call send_msg apis asynchronously" do
+  def get_proper_io(:send_private_msg, id, msg, msg_id) do
+    input = {:send_private_msg, %{user_id: id, message: msg}}
+    output = %Nitory.ApiHandler.SendPrivateMsg.OutputSpec{message_id: msg_id}
+    {input, output}
+  end
+
+  test "call send_*_msg apis asynchronously" do
     Phoenix.PubSub.subscribe(Nitory.PubSub, "session_manager")
 
-    task_1 =
-      Task.async(fn ->
-        GenServer.call(Nitory.ApiHandler, {:send_group_msg, %{group_id: 123, message: "123"}})
-      end)
+    check all(
+            id <- integer(1..1_048_576),
+            message_id <- integer(1..1_048_576),
+            message <- string(:alphanumeric),
+            action <- member_of([:send_group_msg, :send_private_msg]),
+            message != "",
+            initial_size: 2000
+          ) do
+      {input, output} = get_proper_io(action, id, message, message_id)
 
-    echo_1 =
-      receive do
-        {
-          :api_request,
-          %{
-            action: :send_group_msg,
-            params: %Nitory.ApiHandler.SendGroupMsg.InputSpec{
-              group_id: 123,
-              message: "123"
-            },
-            echo: echo
-          }
-        } ->
-          echo
+      task =
+        Task.async(fn ->
+          GenServer.call(Nitory.ApiHandler, input)
+        end)
 
-        data = _ ->
-          flunk("Received:\n#{inspect(data, pretty: true)}")
-          nil
-          # code
-      end
+      echo =
+        receive do
+          {:api_request,
+           %{
+             action: :send_group_msg,
+             params: %Nitory.ApiHandler.SendGroupMsg.InputSpec{
+               group_id: ^id,
+               message: ^message
+             },
+             echo: echo
+           }} ->
+            {:send_group_msg, echo}
 
-    assert echo_1
+          {:api_request,
+           %{
+             action: :send_private_msg,
+             params: %Nitory.ApiHandler.SendPrivateMsg.InputSpec{
+               user_id: ^id,
+               message: ^message
+             },
+             echo: echo
+           }} ->
+            {:send_private_msg, echo}
 
-    task_2 =
-      Task.async(fn ->
-        GenServer.call(Nitory.ApiHandler, {:send_private_msg, %{user_id: 456, message: "456"}})
-      end)
+          data = _ ->
+            flunk("Received:\n#{inspect(data, pretty: true)}")
+            nil
+        end
 
-    echo_2 =
-      receive do
-        {
-          :api_request,
-          %{
-            action: :send_private_msg,
-            params: %Nitory.ApiHandler.SendPrivateMsg.InputSpec{
-              user_id: 456,
-              message: "456"
-            },
-            echo: echo
-          }
-        } ->
-          echo
+      assert {^action, _} = echo
 
-        data = _ ->
-          flunk("Received:\n#{inspect(data, pretty: true)}")
-          nil
-      end
+      {^action, real_echo} = echo
 
-    assert echo_2
+      Phoenix.PubSub.broadcast(
+        Nitory.PubSub,
+        "api_handler",
+        {:response,
+         Nitory.Events.Echo.new!(%{
+           status: :ok,
+           retcode: 0,
+           data: %{message_id: message_id},
+           echo: real_echo
+         })}
+      )
 
-    Phoenix.PubSub.broadcast(
-      Nitory.PubSub,
-      "api_handler",
-      {:response,
-       Nitory.Events.Echo.new!(%{
-         status: :ok,
-         retcode: 0,
-         data: %{message_id: 456},
-         echo: echo_2
-       })}
-    )
-
-    assert Task.await(task_2) ==
-             {:ok, %Nitory.ApiHandler.SendPrivateMsg.OutputSpec{message_id: 456}}
-
-    Phoenix.PubSub.broadcast(
-      Nitory.PubSub,
-      "api_handler",
-      {:response,
-       Nitory.Events.Echo.new!(%{
-         status: :ok,
-         retcode: 0,
-         data: %{message_id: 123},
-         echo: echo_1
-       })}
-    )
-
-    assert Task.await(task_1) ==
-             {:ok, %Nitory.ApiHandler.SendGroupMsg.OutputSpec{message_id: 123}}
+      assert Task.await(task) == {:ok, output}
+    end
   end
 end

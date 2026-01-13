@@ -43,9 +43,9 @@ defmodule Nitory.MiddlewareTest do
 
   import Logger
 
-  setup_all do
-    start_link_supervised!(Nitory.Middleware)
-    start_link_supervised!(Nitory.MiddlewareTest.TestGenServer)
+  setup do
+    start_supervised!(Nitory.Middleware)
+    start_supervised!(Nitory.MiddlewareTest.TestGenServer)
     :ok
   end
 

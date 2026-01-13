@@ -41,6 +41,7 @@ defmodule Nitory.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:depscheck, "~> 1.0.11", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:stream_data, "~> 0.3.0"},
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
