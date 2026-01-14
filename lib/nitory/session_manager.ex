@@ -18,7 +18,6 @@ defmodule Nitory.SessionManager do
 
     children = [
       Nitory.ApiHandler,
-      Nitory.Middleware,
       {Registry, name: Nitory.SessionSlot, keys: :unique},
       {DynamicSupervisor, name: Nitory.SessionSupervisor, strategy: :one_for_one}
     ]
