@@ -38,6 +38,11 @@ defmodule Nitory.SessionManagerTest do
     assert_receive {:receive, _}
     assert_receive {:receive_from_session, _}
 
+    Phoenix.PubSub.broadcast(Nitory.PubSub, "session_manager", {:event, msg})
+
+    assert_receive {:receive, _}
+    assert_receive {:receive_from_session, _}
+
     msg = ~s'{
         "time": 1718000002,
         "post_type": "message",

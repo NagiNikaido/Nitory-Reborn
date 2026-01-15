@@ -1,14 +1,14 @@
 defmodule Nitory.MiddlewareTest.TestModule do
   import Logger
 
-  def call(session, next, a, b, c) do
+  def call(ctx, next, a, b, c) do
     Logger.info("I'm another middleware, currently in #{__MODULE__}.")
 
     Logger.info(
       "I have three other arguments, a: #{inspect(a)}, b: #{inspect(b)}, c: #{inspect(c)}"
     )
 
-    Nitory.Middleware.run(session, next)
+    Nitory.Middleware.run(ctx, next)
   end
 end
 
@@ -27,15 +27,15 @@ defmodule Nitory.MiddlewareTest.TestGenServer do
   end
 
   @impl true
-  def handle_call({:feed, session, next, a, b}, _from, state) do
+  def handle_call({:feed, ctx, next, a, b}, _from, state) do
     Logger.info("I'm a middlware-genserver, currently in #{__MODULE__}")
     Logger.info("I have two arguments, a: #{inspect(a)}, b: #{inspect(b)}")
 
-    Nitory.Middleware.run(session, next)
+    Nitory.Middleware.run(ctx, next)
     {:reply, :ok, state}
   end
 
-  def feed(session, next, a, b), do: GenServer.call(__MODULE__, {:feed, session, next, a, b})
+  def feed(ctx, next, a, b), do: GenServer.call(__MODULE__, {:feed, ctx, next, a, b})
 end
 
 defmodule Nitory.MiddlewareTest do
@@ -52,23 +52,26 @@ defmodule Nitory.MiddlewareTest do
   test "middlewares", context do
     mw = context[:mw]
 
+    # 1
     dispose_1 =
-      Nitory.Middleware.register(mw, fn session, next ->
+      Nitory.Middleware.register(mw, fn ctx, next ->
         Logger.info("I'm middleware 1. Everything ends here.")
         :ok
       end)
 
+    # 2 1
     dispose_2 =
       Nitory.Middleware.register(
         mw,
-        fn session, next ->
-          Logger.info("I'm middleware 2. Let's see what's in the session.")
-          Logger.info(inspect(session, pretty: true))
-          Nitory.Middleware.run(session, next)
+        fn ctx, next ->
+          Logger.info("I'm middleware 2. Let's see what's in the ctx.")
+          Logger.info(inspect(ctx, pretty: true))
+          Nitory.Middleware.run(ctx, next)
         end,
         :prepend
       )
 
+    # 3 2 1
     dispose_3 =
       Nitory.Middleware.register(
         mw,
@@ -78,13 +81,15 @@ defmodule Nitory.MiddlewareTest do
         :prepend
       )
 
+    # 3 2 1 4
     dispose_4 =
-      Nitory.Middleware.register(mw, fn session, next ->
+      Nitory.Middleware.register(mw, fn ctx, next ->
         Logger.info("I'm middleware 4. I'm covered by middleware 1.")
         Logger.info("If I'm seen, middleware 1 has been disposed.")
-        Nitory.Middleware.run(session, next)
+        Nitory.Middleware.run(ctx, next)
       end)
 
+    # 5 3 2 1 4
     dispose_5 =
       Nitory.Middleware.register(
         mw,
@@ -94,12 +99,24 @@ defmodule Nitory.MiddlewareTest do
         :prepend
       )
 
-    Logger.info(Nitory.Middleware.list_mw(mw))
+    # 5 3 2 1 4 6
+    dispose_6 =
+      Nitory.Middleware.register(
+        mw,
+        fn ctx, next ->
+          dispose_5.()
+          Nitory.Middleware.run(ctx, next)
+        end
+      )
+
+    Logger.info(Nitory.Middleware.list(mw))
 
     Nitory.Middleware.excute(mw, {})
 
+    # 5 3 2 4 6
     dispose_1.()
 
+    # After this, should be 3 2 4 6.
     Nitory.Middleware.excute(mw, {})
 
     dispose_3.()

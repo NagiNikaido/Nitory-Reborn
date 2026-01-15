@@ -34,6 +34,10 @@ defmodule Nitory.SessionManager do
     PubSub.broadcast(Nitory.PubSub, "api_handler", msg)
   end
 
+  defp send_to_session(msg, session_id) do
+    PubSub.broadcast(Nitory.PubSub, "session:#{session_id}", msg)
+  end
+
   defp extract_session_id(msg) do
     case msg.message_type do
       :group -> "group:#{msg.group_id}"
@@ -41,25 +45,16 @@ defmodule Nitory.SessionManager do
     end
   end
 
-  defp send_to_session(msg, session_id) do
-    session_pid =
-      case Registry.lookup(Nitory.SessionSlot, session_id) do
-        [{_, pid}] ->
-          pid
-
-        [] ->
-          {:ok, pid} =
-            DynamicSupervisor.start_child(
-              Nitory.SessionSupervisor,
-              {Nitory.Session, [name: session_id]}
-            )
-
-          Registry.register(Nitory.SessionSlot, session_id, pid)
-          pid
-      end
-
-    Logger.info("[#{__MODULE__}] #{session_id}: #{inspect(session_pid)}")
-    send(session_pid, msg)
+  defp ensure_session_exists(session_id) do
+    case DynamicSupervisor.start_child(
+           Nitory.SessionSupervisor,
+           {Nitory.Session,
+            name: {:via, Registry, {Nitory.SessionSlot, session_id}}, session_id: session_id}
+         ) do
+      {:ok, pid} -> pid
+      {:error, {:already_started, pid}} -> pid
+      {:error, error} -> raise inspect(error)
+    end
   end
 
   @impl true
@@ -100,6 +95,7 @@ defmodule Nitory.SessionManager do
 
   def handle_event(%{post_type: :message} = ev_obj, state) do
     session_id = extract_session_id(ev_obj)
+    ensure_session_exists(session_id)
     send_to_session({:message_in, ev_obj}, session_id)
     {:noreply, state}
   end

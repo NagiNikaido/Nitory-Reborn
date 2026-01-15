@@ -12,25 +12,23 @@ defmodule Nitory.Middleware do
   @type server() :: GenServer.server()
 
   def start_link(init_arg) do
-    GenServer.start_link(__MODULE__, init_arg, name: __MODULE__)
+    GenServer.start_link(__MODULE__, init_arg)
   end
 
   @impl true
   def init(_init_arg) do
-    {:ok, {}}
+    {:ok, []}
   end
 
   @impl true
-  def handle_call({:excute, session}, _from, state) do
-    middlewares = Process.get(:middlewares, [])
-    res = run(session, middlewares)
+  def handle_call({:excute_middleware, ctx}, _from, middlewares = state) do
+    res = run(ctx, middlewares)
     {:reply, res, state}
   end
 
   @impl true
-  def handle_call({:excute!, session}, _from, state) do
-    middlewares = Process.get(:middlewares, [])
-    res = run(session, middlewares)
+  def handle_call({:excute_middleware!, ctx}, _from, middlewares = state) do
+    res = run(ctx, middlewares)
 
     case res do
       {:ok, payload} -> {:reply, payload, state}
@@ -39,9 +37,7 @@ defmodule Nitory.Middleware do
   end
 
   @impl true
-  def handle_call({:register, func, mode}, _from, state) do
-    middlewares = Process.get(:middlewares, [])
-
+  def handle_call({:register_middleware, func, mode}, _from, middlewares = _state) do
     uuid = Ecto.UUID.generate()
 
     middlewares =
@@ -50,16 +46,12 @@ defmodule Nitory.Middleware do
         :prepend -> [{uuid, :fn, func}] ++ middlewares
       end
 
-    Process.put(:middlewares, middlewares)
-
     mw = self()
-    {:reply, fn -> dispose(mw, uuid) end, state}
+    {:reply, fn -> dispose(mw, uuid) end, middlewares}
   end
 
   @impl true
-  def handle_call({:register, module, func, args, mode}, _from, state) do
-    middlewares = Process.get(:middlewares, [])
-
+  def handle_call({:register_middleware, module, func, args, mode}, _from, middlewares = _state) do
     uuid = Ecto.UUID.generate()
 
     middlewares =
@@ -68,39 +60,31 @@ defmodule Nitory.Middleware do
         :prepend -> [{uuid, module, func, args}] ++ middlewares
       end
 
-    Process.put(:middlewares, middlewares)
-
     mw = self()
-    {:reply, fn -> dispose(mw, uuid) end, state}
+    {:reply, fn -> dispose(mw, uuid) end, middlewares}
   end
 
   @impl true
-  def handle_call({:dispose, uuid}, _from, state) do
-    middlewares = Process.get(:middlewares, [])
-
-    middlewares = Enum.filter(middlewares, fn mw -> elem(mw, 0) != uuid end)
-    Process.put(:middlewares, middlewares)
-
-    {:reply, :ok, state}
-  end
-
-  @impl true
-  def handle_call({:list_mw}, _from, state) do
-    middlewares = Process.get(:middlewares, [])
-
+  def handle_call({:list_middleware}, _from, middlewares = state) do
     {:reply, middlewares, state}
   end
 
+  @impl true
+  def handle_cast({:dispose_middleware, uuid}, middlewares = _state) do
+    middlewares = Enum.filter(middlewares, fn mw -> elem(mw, 0) != uuid end)
+    {:noreply, middlewares}
+  end
+
   @spec run(term(), list()) :: {:ok, term()} | {:error, term()}
-  def run(_session, []), do: {:ok, nil}
-  def run(session, [{_, :fn, f} | next]), do: apply(f, [session, next])
-  def run(session, [{_, m, f, a} | next]), do: apply(m, f, [session, next | a])
+  def run(_ctx, []), do: {:ok, nil}
+  def run(ctx, [{_, :fn, f} | next]), do: apply(f, [ctx, next])
+  def run(ctx, [{_, m, f, a} | next]), do: apply(m, f, [ctx, next | a])
 
   @spec excute(server(), term()) :: :ok | {:ok, term()} | {:error, term()}
-  def excute(server, session), do: GenServer.call(server, {:excute, session})
+  def excute(server, ctx), do: GenServer.call(server, {:excute_middleware, ctx})
 
   @spec excute!(server(), term()) :: term()
-  def excute!(server, session), do: GenServer.call(server, {:excute!, session})
+  def excute!(server, ctx), do: GenServer.call(server, {:excute_middleware!, ctx})
 
   @spec register(
           server(),
@@ -108,15 +92,16 @@ defmodule Nitory.Middleware do
           :append | :prepend
         ) ::
           (-> :ok)
-  def register(server, func, mode \\ :append), do: GenServer.call(server, {:register, func, mode})
+  def register(server, func, mode \\ :append),
+    do: GenServer.call(server, {:register_middleware, func, mode})
 
   @spec register(server(), module(), atom(), list(), :append | :prepend) :: (-> :ok)
   def register(server, module, func, args, mode \\ :append),
-    do: GenServer.call(server, {:register, module, func, args, mode})
+    do: GenServer.call(server, {:register_middleware, module, func, args, mode})
 
   @spec dispose(server(), binary()) :: :ok
-  def dispose(server, uuid), do: GenServer.call(server, {:dispose, uuid})
+  def(dispose(server, uuid), do: GenServer.cast(server, {:dispose_middleware, uuid}))
 
-  @spec list_mw(server()) :: list()
-  def list_mw(server), do: GenServer.call(server, {:list_mw})
+  @spec list(server()) :: list()
+  def list(server), do: GenServer.call(server, {:list_middleware})
 end
