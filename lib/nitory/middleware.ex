@@ -11,8 +11,9 @@ defmodule Nitory.Middleware do
 
   @type server() :: GenServer.server()
 
-  def start_link(init_arg) do
-    GenServer.start_link(__MODULE__, init_arg)
+  def start_link(arg) do
+    {name, init_arg} = Keyword.pop(arg, :name, nil)
+    GenServer.start_link(__MODULE__, init_arg, name: name)
   end
 
   @impl true
@@ -31,6 +32,7 @@ defmodule Nitory.Middleware do
     res = run(ctx, middlewares)
 
     case res do
+      :ok -> {:reply, :ok, state}
       {:ok, payload} -> {:reply, payload, state}
       {:error, error} -> raise error
     end
@@ -75,8 +77,8 @@ defmodule Nitory.Middleware do
     {:noreply, middlewares}
   end
 
-  @spec run(term(), list()) :: {:ok, term()} | {:error, term()}
-  def run(_ctx, []), do: {:ok, nil}
+  @spec run(term(), list()) :: :ok | {:ok, term()} | {:error, term()}
+  def run(_ctx, []), do: :ok
   def run(ctx, [{_, :fn, f} | next]), do: apply(f, [ctx, next])
   def run(ctx, [{_, m, f, a} | next]), do: apply(m, f, [ctx, next | a])
 

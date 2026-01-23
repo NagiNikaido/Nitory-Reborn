@@ -37,7 +37,7 @@ defmodule Nitory.Message.Segment.At do
     field! :type, Nitory.Message.Segment.Types, default: :at
 
     embeds_one! :data, Datum do
-      field! :qq, :integer
+      field! :qq, Union, oneof: [:string, :integer]
       field :name, :string
     end
   end

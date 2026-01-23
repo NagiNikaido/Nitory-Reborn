@@ -19,7 +19,8 @@ defmodule Nitory.SessionManager do
     children = [
       Nitory.ApiHandler,
       {Registry, name: Nitory.SessionSlot, keys: :unique},
-      {DynamicSupervisor, name: Nitory.SessionSupervisor, strategy: :one_for_one}
+      {DynamicSupervisor, name: Nitory.SessionSupervisor, strategy: :one_for_one},
+      {Task.Supervisor, name: Nitory.TaskSupervisor}
     ]
 
     {:ok, _} = Supervisor.start_link(children, strategy: :one_for_one)
@@ -34,22 +35,31 @@ defmodule Nitory.SessionManager do
     PubSub.broadcast(Nitory.PubSub, "api_handler", msg)
   end
 
-  defp send_to_session(msg, session_id) do
-    PubSub.broadcast(Nitory.PubSub, "session:#{session_id}", msg)
+  defp send_to_session(msg, session_prefix) do
+    PubSub.broadcast(Nitory.PubSub, "session:#{session_prefix}", msg)
   end
 
-  defp extract_session_id(msg) do
-    case msg.message_type do
-      :group -> "group:#{msg.group_id}"
-      :private -> "private:#{msg.user_id}"
-    end
+  defp extract_session_meta(msg) do
+    session_type = msg.message_type
+
+    session_id =
+      case msg.message_type do
+        :group -> msg.group_id
+        :private -> msg.user_id
+      end
+
+    session_prefix = "#{session_type}:#{session_id}"
+    {session_type, session_id, session_prefix}
   end
 
-  defp ensure_session_exists(session_id) do
+  defp ensure_session_exists({session_type, session_id, session_prefix}) do
     case DynamicSupervisor.start_child(
            Nitory.SessionSupervisor,
            {Nitory.Session,
-            name: {:via, Registry, {Nitory.SessionSlot, session_id}}, session_id: session_id}
+            name: {:via, Registry, {Nitory.SessionSlot, session_prefix}},
+            session_id: session_id,
+            session_type: session_type,
+            session_prefix: session_prefix}
          ) do
       {:ok, pid} -> pid
       {:error, {:already_started, pid}} -> pid
@@ -94,9 +104,10 @@ defmodule Nitory.SessionManager do
   end
 
   def handle_event(%{post_type: :message} = ev_obj, state) do
-    session_id = extract_session_id(ev_obj)
-    ensure_session_exists(session_id)
-    send_to_session({:message_in, ev_obj}, session_id)
+    session_meta = extract_session_meta(ev_obj)
+    ensure_session_exists(session_meta)
+    {_, _, session_prefix} = session_meta
+    send_to_session({:message_in, ev_obj}, session_prefix)
     {:noreply, state}
   end
 
