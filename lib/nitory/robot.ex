@@ -194,6 +194,21 @@ defmodule Nitory.Robot do
           end
         end)
 
+      _ ->
+        handle_answer(answer, state)
+    end
+
+    {:noreply, state}
+  end
+
+  defp handle_answer(answer, state) do
+    PubSub.broadcast(
+      Nitory.PubSub,
+      "socket",
+      {:receive_from_session, "#{state.session_type}:#{state.session_id}"}
+    )
+
+    case answer do
       {:ok, msg} when is_binary(msg) or is_list(msg) ->
         reply_to_session(self(), msg)
 
@@ -222,10 +237,8 @@ defmodule Nitory.Robot do
         reply_to_session(self(), "* 未知错误")
 
       :ok ->
-        PubSub.broadcast(Nitory.PubSub, "socket", {:receive_from_session, 123})
+        nil
     end
-
-    {:noreply, state}
   end
 
   @impl true

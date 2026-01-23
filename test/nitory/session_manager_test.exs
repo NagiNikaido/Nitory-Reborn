@@ -35,8 +35,7 @@ defmodule Nitory.SessionManagerTest do
     Phoenix.PubSub.broadcast(Nitory.PubSub, "session_manager", {:event, msg})
 
     # IEx.pry()
-    assert_receive {:receive, _}
-    assert_receive {:receive_from_session, _}
+    assert_receive {:receive_from_session, "private:234567890"}
 
     # Phoenix.PubSub.broadcast(Nitory.PubSub, "session_manager", {:event, msg})
 
