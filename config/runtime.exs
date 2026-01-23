@@ -20,6 +20,17 @@ if System.get_env("PHX_SERVER") do
   config :nitory, NitoryWeb.Endpoint, server: true
 end
 
+config :nitory, Nitory.Plugins.Help,
+  version: Application.spec(:nitory, :vsn),
+  startup_time: DateTime.utc_now()
+
+config :nitory, Nitory.Robot,
+  plugins: [
+    Nitory.Plugins.Help,
+    Nitory.Plugins.Nick,
+    Nitory.Plugins.Dice
+  ]
+
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
