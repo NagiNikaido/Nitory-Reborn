@@ -39,7 +39,7 @@ defmodule Nitory.Plugins.Help do
 
   def print_help(opts \\ []) do
     helper = Keyword.fetch!(opts, :server)
-    name = Keyword.get(opts, :cmd_name)
+    name = Keyword.get(opts, :cmd)
 
     if name do
       print_help_help(helper, name)
