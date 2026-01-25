@@ -59,7 +59,7 @@ defmodule Nitory.Robot do
         strategy: :one_for_one
       )
 
-    GenServer.cast(self(), {:defered_init})
+    GenServer.cast(self(), {:deferred_init})
 
     {:ok,
      %{
@@ -123,8 +123,8 @@ defmodule Nitory.Robot do
   end
 
   @impl true
-  def handle_cast({:defered_init}, state) do
-    %{middleware: middleware, plugins: plugins, session_prefix: session_prefix} = state
+  def handle_cast({:deferred_init}, state) do
+    %{middleware: middleware, plugins: plugins} = state
 
     Nitory.Middleware.register(middleware, fn msg, next ->
       [reply, at | message] = split_reply(msg.message)
@@ -156,7 +156,7 @@ defmodule Nitory.Robot do
     end)
 
     Enum.each(plugins, fn {_, _, loc} ->
-      GenServer.cast(loc, {:defered_init})
+      GenServer.cast(loc, {:deferred_init})
     end)
 
     {:noreply, state}
@@ -228,7 +228,7 @@ defmodule Nitory.Robot do
         reply_to_session(self(), "* 无效指令")
 
       {:error, error_msg} when is_binary(error_msg) ->
-        reply_to_session(self(), "* #{error_msg}")
+        reply_to_session(self(), "#{error_msg}")
 
       {:error, error_package} ->
         Logger.warning(inspect(error_package))

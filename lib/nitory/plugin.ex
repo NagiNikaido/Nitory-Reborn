@@ -24,6 +24,7 @@ defmodule Nitory.Plugin do
         {session_id, init_arg} = Keyword.pop!(init_arg, :session_id)
         {session_type, init_arg} = Keyword.pop!(init_arg, :session_type)
         {session_prefix, init_arg} = Keyword.pop!(init_arg, :session_prefix)
+        {middleware, init_arg} = Keyword.pop!(init_arg, :middleware)
         {robot, init_arg} = Keyword.pop!(init_arg, :robot)
         extra_args = capture_extra_args(init_arg)
 
@@ -33,6 +34,7 @@ defmodule Nitory.Plugin do
            session_id: session_id,
            session_type: session_type,
            session_prefix: session_prefix,
+           middleware: middleware,
            robot: robot
          })}
       end
@@ -55,7 +57,7 @@ defmodule Nitory.Plugin do
       defoverridable(init_plugin: 1, capture_extra_args: 1)
 
       @impl true
-      def handle_cast({:defered_init}, state), do: {:noreply, init_plugin(state)}
+      def handle_cast({:deferred_init}, state), do: {:noreply, init_plugin(state)}
     end
   end
 
