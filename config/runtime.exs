@@ -28,7 +28,8 @@ config :nitory, Nitory.Robot,
   plugins: [
     Nitory.Plugins.Help,
     Nitory.Plugins.Nick,
-    Nitory.Plugins.Dice
+    Nitory.Plugins.Dice,
+    Nitory.Plugins.Khst
   ]
 
 if config_env() == :prod do
