@@ -65,12 +65,16 @@ defmodule Nitory.Message.Segment do
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
   def cast(%{"type" => "text", "data" => _} = m), do: Text.cast(m)
+  def cast(%{type: :text, data: _} = m), do: Text.cast(m)
 
   def cast(%{"type" => "image", "data" => _} = m), do: Image.cast(m)
+  def cast(%{type: :image, data: _} = m), do: Image.cast(m)
 
   def cast(%{"type" => "reply", "data" => _} = m), do: Reply.cast(m)
+  def cast(%{type: :reply, data: _} = m), do: Reply.cast(m)
 
   def cast(%{"type" => "at", "data" => _} = m), do: At.cast(m)
+  def cast(%{type: :at, data: _} = m), do: At.cast(m)
 
   def cast(t), do: {:error, "Unsupported segment #{inspect(t)}!"}
 
