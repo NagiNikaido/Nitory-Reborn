@@ -31,7 +31,7 @@ defmodule Nitory.Robot do
             p -> {p, []}
           end
 
-        name = apply(plugin_module, :plugin_name, config)
+        name = apply(plugin_module, :plugin_name, [])
         location = {:via, Registry, {Nitory.SessionSlot, "#{session_prefix}:robot:#{name}"}}
         {plugin_module, config, location}
       end)
