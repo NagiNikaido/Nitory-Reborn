@@ -125,6 +125,11 @@ defmodule Nitory.SessionManager do
     end
   end
 
+  def handle_event(ev_obj, state) do
+    Logger.warning("[#{__MODULE__}] Unsupported event: #{inspect(ev_obj, pretty: true)}")
+    {:noreply, state}
+  end
+
   @impl true
   def handle_info({:check_heartbeat, _interval}, state) do
     cur_timestamp = DateTime.to_unix(DateTime.utc_now(), :millisecond)
