@@ -10,6 +10,8 @@ defmodule Nitory.Plugin do
       @behaviour unquote(__MODULE__)
       alias Nitory.Command.Option
 
+      require Logger
+
       def start_link(arg) do
         {name, init_arg} = Keyword.pop(arg, :name, nil)
         GenServer.start_link(__MODULE__, init_arg, name: name)
