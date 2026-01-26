@@ -14,7 +14,7 @@ defmodule Nitory.Session do
     session_type = Keyword.fetch!(init_arg, :session_type)
     session_id = Keyword.fetch!(init_arg, :session_id)
     session_prefix = Keyword.fetch!(init_arg, :session_prefix)
-    Logger.info("[#{__MODULE__}] #{inspect(Process.info(self()), pretty: true)}")
+    Logger.debug("[#{__MODULE__}] #{inspect(Process.info(self()), pretty: true)}")
 
     robot = {:via, Registry, {Nitory.SessionSlot, "#{session_prefix}:robot"}}
 

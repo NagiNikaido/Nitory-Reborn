@@ -10,7 +10,6 @@ defmodule Nitory.Helper.Api do
     output_spec_module = Module.concat(handler_module, "OutputSpec")
 
     Module.put_attribute(__CALLER__.module, :apis, {handler, handler_module})
-    IO.inspect(handler_module)
 
     quote do
       defmodule unquote(handler_module) do

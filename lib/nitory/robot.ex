@@ -18,7 +18,7 @@ defmodule Nitory.Robot do
     middleware = {:via, Registry, {Nitory.SessionSlot, "#{session_prefix}:middleware"}}
     robot = self()
 
-    Logger.info(inspect(self()))
+    Logger.debug("[#{__MODULE__}] #{inspect(init_arg)}")
 
     plugins =
       Application.fetch_env!(:nitory, Nitory.Robot)

@@ -28,6 +28,8 @@ defmodule Nitory.Plugin do
         {robot, init_arg} = Keyword.pop!(init_arg, :robot)
         extra_args = capture_extra_args(init_arg)
 
+        Logger.debug("[#{__MODULE__}] #{inspect(init_arg)}")
+
         {:ok,
          Map.merge(extra_args, %{
            session: session,
@@ -66,8 +68,6 @@ defmodule Nitory.Plugin do
 
     opts =
       Enum.map(opts, fn {key, val} -> {key, elem(Code.eval_quoted(val, [], __CALLER__), 0)} end)
-
-    IO.inspect(opts)
 
     {:ok, command} = Nitory.Command.new(opts)
 
