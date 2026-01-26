@@ -132,10 +132,10 @@ defmodule Nitory.SessionManager do
   end
 
   @impl true
-  def handle_info({:check_heartbeat, _interval}, state) do
+  def handle_info({:check_heartbeat, interval}, state) do
     cur_timestamp = DateTime.to_unix(DateTime.utc_now(), :millisecond)
 
-    if cur_timestamp - state.last_timestamp > state.interval do
+    if cur_timestamp - state.last_timestamp > interval do
       raise "Heartbeat stopped."
     end
 
