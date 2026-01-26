@@ -43,7 +43,8 @@ defmodule Nitory.Socket do
   # end
 
   def handle_info({:receive, reply}, state) do
-    {:push, {:text, reply}, state}
+    Logger.log(:info, "Received: #{reply}")
+    {:ok, state}
   end
 
   def handle_info({:api_request, request}, state) do
@@ -51,8 +52,8 @@ defmodule Nitory.Socket do
   end
 
   def handle_info({:error, err}, state) do
-    Logger.log(:debug, err)
-    {:push, {:text, err}, state}
+    Logger.log(:warning, err)
+    {:ok, state}
   end
 
   def handle_info(_, state) do

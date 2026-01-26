@@ -13,15 +13,15 @@ defmodule Nitory.Events.Message.PrivateMessage do
     field! :message_id, :integer
     field! :user_id, :integer
     field! :message, Nitory.Message
-    field! :raw_message, :string
-    field! :font, :integer
+    field :raw_message, :string
+    field :font, :integer
     field :target_id, :integer
     field :temp_source, :integer
 
     embeds_one :sender, Sender do
       field! :user_id, :integer
       field! :nickname, :string
-      field! :sex, Ecto.Enum, values: [:male, :female, :unknown]
+      field :sex, Ecto.Enum, values: [:male, :female, :unknown]
       field :age, :integer
     end
 
@@ -42,15 +42,15 @@ defmodule Nitory.Events.Message.GroupMessage do
     field! :user_id, :integer
     field! :group_id, :integer
     field! :message, Nitory.Message
-    field! :raw_message, :string
-    field! :font, :integer
+    field :raw_message, :string
+    field :font, :integer
 
     embeds_one! :sender, Sender do
       field! :user_id, :integer
       field! :nickname, :string
-      field! :sex, Ecto.Enum, values: [:male, :female, :unknown]
+      field :sex, Ecto.Enum, values: [:male, :female, :unknown]
       field :card, :string
-      field! :role, Ecto.Enum, values: [:owner, :admin, :member]
+      field :role, Ecto.Enum, values: [:owner, :admin, :member]
     end
   end
 end
@@ -66,8 +66,10 @@ defmodule Nitory.Events.Message do
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
   def cast(%{"message_type" => "group"} = m), do: GroupMessage.cast(m)
+  def cast(%{message_type: :group} = m), do: GroupMessage.cast(m)
 
   def cast(%{"message_type" => "private"} = m), do: PrivateMessage.cast(m)
+  def cast(%{message_type: :private} = m), do: PrivateMessage.cast(m)
 
   def cast(t), do: {:error, "Unsupported message event: #{inspect(t)}"}
 
