@@ -99,8 +99,6 @@ defmodule Nitory.SessionManager do
   def handle_info({:parsed_event, ev_obj}, state) do
     Logger.debug("[#{__MODULE__}] Parsed event: #{inspect(ev_obj, pretty: true)}")
     handle_event(ev_obj, state)
-
-    {:noreply, state}
   end
 
   def handle_event(%{post_type: :message} = ev_obj, state) do
@@ -121,7 +119,10 @@ defmodule Nitory.SessionManager do
     if ev_obj.status.good do
       Process.send_after(self(), {:check_heartbeat, ev_obj.interval}, ev_obj.interval + @eta)
       cur_timestamp = DateTime.to_unix(DateTime.utc_now(), :millisecond)
+
       {:noreply, %{state | last_timestamp: cur_timestamp}}
+    else
+      {:noreply, state}
     end
   end
 
