@@ -82,7 +82,7 @@ defmodule Nitory.Plugins.Khst do
   end
 
   defp add_picture(keyword, group_id, hash_sum, path) do
-    Nitory.Repo.transact(fn ->
+    Nitory.Repo.transact(fn repo ->
       existing_pic = Nitory.Repo.get_by(Picture, hash_sum: hash_sum)
       first_met = existing_pic == nil
 
@@ -90,7 +90,7 @@ defmodule Nitory.Plugins.Khst do
 
       res =
         if first_met do
-          Nitory.Repo.insert(%Picture{
+          repo.insert(%Picture{
             hash_sum: hash_sum,
             path: path,
             keywords: [%Keyword2Picture{keyword: keyword, group_id: group_id, tag: ""}]
@@ -98,12 +98,12 @@ defmodule Nitory.Plugins.Khst do
         else
           existing_pic
           |> Ecto.build_assoc(:keywords, keyword_line)
-          |> Nitory.Repo.insert()
+          |> repo.insert()
         end
 
       case res do
         {:ok, _} ->
-          count = length(Nitory.Repo.all_by(Keyword2Picture, keyword_line))
+          count = length(repo.all_by(Keyword2Picture, keyword_line))
           {:ok, {first_met, count}}
 
         _ ->
@@ -129,14 +129,14 @@ defmodule Nitory.Plugins.Khst do
 
   defp add_history(message_id, keyword, group_id, hash_sum) do
     res =
-      Nitory.Repo.transact(fn ->
-        Nitory.Repo.get_by!(Picture, hash_sum: hash_sum)
+      Nitory.Repo.transact(fn repo ->
+        repo.get_by!(Picture, hash_sum: hash_sum)
         |> Ecto.build_assoc(:history, %{
           message_id: message_id,
           keyword: keyword,
           group_id: group_id
         })
-        |> Nitory.Repo.insert()
+        |> repo.insert()
       end)
 
     case res do
@@ -164,12 +164,18 @@ defmodule Nitory.Plugins.Khst do
     end
   end
 
-  def pick_responding_picture(keyword, group_id, message_id) do
+  def pick_responding_picture(keyword, group_id) do
     with {:ok, pics} <- get_pictures_by_keyword(keyword, group_id),
          pic = List.first(Enum.take_random(pics, 1)),
+         uri = URI.merge("file://", pic.path),
+         msg = [Nitory.Message.Segment.Image.new!(%{data: %{file: to_string(uri)}})],
+         {:ok, message_id} =
+           GenServer.call(
+             Nitory.ApiHandler,
+             {:send_group_msg, %{group_id: group_id, message: msg}}
+           ),
          {:ok, _} <- add_history(message_id, keyword, group_id, pic.hash_sum) do
-      uri = URI.merge("file://", pic.path)
-      {:ok, [%{type: :image, data: %{file: to_string(uri)}}]}
+      :ok
     else
       error -> error
     end
@@ -202,7 +208,7 @@ defmodule Nitory.Plugins.Khst do
   @impl true
   def handle_call({:capture_keyword_and_respond, msg, keyword, _raw_tags}, _from, state) do
     # Here it's guarenteed that the incoming message is a group and text-only message.
-    resp = pick_responding_picture(keyword, state.session_id, msg.message_id)
+    resp = pick_responding_picture(keyword, state.session_id)
     {:reply, resp, state}
   end
 
