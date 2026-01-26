@@ -24,13 +24,15 @@ config :nitory, Nitory.Plugins.Help,
   version: Application.spec(:nitory, :vsn),
   startup_time: DateTime.utc_now()
 
-config :nitory, Nitory.Robot,
-  plugins: [
-    Nitory.Plugins.Help,
-    Nitory.Plugins.Nick,
-    Nitory.Plugins.Dice,
-    Nitory.Plugins.Khst
-  ]
+if config_env() != :prod do
+  config :nitory, Nitory.Robot,
+    plugins: [
+      Nitory.Plugins.Help,
+      Nitory.Plugins.Nick,
+      Nitory.Plugins.Dice,
+      Nitory.Plugins.Khst
+    ]
+end
 
 if config_env() == :prod do
   database_path =
@@ -39,6 +41,21 @@ if config_env() == :prod do
       environment variable DATABASE_PATH is missing.
       For example: /etc/nitory/nitory.db
       """
+
+  khst_path =
+    System.get_env("KHST_PATH") ||
+      raise """
+      environment variable DATABASE_PATH is missing.
+      For example: /etc/nitory/pic
+      """
+
+  config :nitory, Nitory.Robot,
+    plugins: [
+      Nitory.Plugins.Help,
+      Nitory.Plugins.Nick,
+      Nitory.Plugins.Dice,
+      {Nitory.Plugins.Khst, path_prefix: khst_path}
+    ]
 
   config :nitory, Nitory.Repo,
     database: database_path,
