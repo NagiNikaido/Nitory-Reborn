@@ -42,8 +42,10 @@ defmodule Nitory.Events.Request do
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
   def cast(%{"request_type" => "friend"} = m), do: FriendRequest.cast(m)
+  def cast(%{request_type: :friend} = m), do: FriendRequest.cast(m)
 
   def cast(%{"request_type" => "group"} = m), do: GroupRequest.cast(m)
+  def cast(%{request_type: :group} = m), do: GroupRequest.cast(m)
 
   def cast(t), do: {:error, "Unsupported request event: #{inspect(t)}"}
 

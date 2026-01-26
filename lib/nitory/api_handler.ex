@@ -38,8 +38,8 @@ defmodule Nitory.ApiHandler do
   end
 
   defp handle_request(handler, params, from, state, call_type) do
-    Logger.info(
-      "#{handler}, #{inspect(params, pretty: true)}, #{inspect(from)}, #{inspect(state)}, #{call_type}"
+    Logger.debug(
+      "[#{__MODULE__}] #{handler}, #{inspect(params, pretty: true)}, #{inspect(from)}, #{inspect(state)}, #{call_type}"
     )
 
     {:ok, param} = prepare_request(handler, params)
@@ -61,7 +61,7 @@ defmodule Nitory.ApiHandler do
       :ok ->
         {:ok, data} = prepare_response(handler, msg.data)
 
-        Logger.info(
+        Logger.debug(
           "[#{__MODULE__}] Received response to request \##{msg.echo}:\n#{inspect(msg, pretty: true)}"
         )
 

@@ -14,7 +14,7 @@ defmodule Nitory.Socket do
   def init(state) do
     PubSub.subscribe(Nitory.PubSub, "socket")
     send(self(), :heartbeat)
-    Logger.log(:info, "[Nitory.Socket] #{inspect(self())}, #{inspect(state)}")
+    Logger.debug("[#{__MODULE__}] #{inspect(self())}, #{inspect(state)}")
 
     children = [
       Nitory.SessionManager
@@ -43,7 +43,7 @@ defmodule Nitory.Socket do
   # end
 
   def handle_info({:receive, reply}, state) do
-    Logger.log(:info, "Received: #{reply}")
+    Logger.debug("[#{__MODULE__}] Received echo: #{reply}")
     {:ok, state}
   end
 
@@ -52,7 +52,7 @@ defmodule Nitory.Socket do
   end
 
   def handle_info({:error, err}, state) do
-    Logger.log(:warning, err)
+    Logger.warning("[#{__MODULE__}] #{err}")
     {:ok, state}
   end
 

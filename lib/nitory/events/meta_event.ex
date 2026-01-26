@@ -42,9 +42,11 @@ defmodule Nitory.Events.MetaEvent do
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
-  def cast(%{meta_event_type: "heartbeat"} = m), do: Heartbeat.cast(m)
+  def cast(%{"meta_event_type" => "heartbeat"} = m), do: Heartbeat.cast(m)
+  def cast(%{meta_event_type: :heartbeat} = m), do: Heartbeat.cast(m)
 
-  def cast(%{meta_event_type: "lifecycle"} = m), do: Lifecycle.cast(m)
+  def cast(%{"meta_event_type" => "lifecycle"} = m), do: Lifecycle.cast(m)
+  def cast(%{meta_event_type: :lifecycle} = m), do: Lifecycle.cast(m)
 
   def cast(t), do: {:error, "Unsupported meta event: #{inspect(t)}"}
 

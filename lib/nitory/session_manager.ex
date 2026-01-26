@@ -97,7 +97,7 @@ defmodule Nitory.SessionManager do
 
   @impl true
   def handle_info({:parsed_event, ev_obj}, state) do
-    Logger.info("#{inspect(ev_obj, pretty: true)}")
+    Logger.debug("[#{__MODULE__}] Parsed event: #{inspect(ev_obj, pretty: true)}")
     handle_event(ev_obj, state)
 
     {:noreply, state}

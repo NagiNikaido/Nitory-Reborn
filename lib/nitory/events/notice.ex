@@ -163,20 +163,28 @@ defmodule Nitory.Events.Notice do
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
   def cast(%{"notice_type" => "group_admin"} = m), do: GroupAdmin.cast(m)
+  def cast(%{notice_type: :group_admin} = m), do: GroupAdmin.cast(m)
 
   def cast(%{"notice_type" => "group_ban"} = m), do: GroupBan.cast(m)
+  def cast(%{notice_type: :group_ban} = m), do: GroupBan.cast(m)
 
   def cast(%{"notice_type" => "group_decrease"} = m), do: GroupDecrease.cast(m)
+  def cast(%{notice_type: :group_decrease} = m), do: GroupDecrease.cast(m)
 
   def cast(%{"notice_type" => "group_increase"} = m), do: GroupIncrease.cast(m)
+  def cast(%{notice_type: :group_increase} = m), do: GroupIncrease.cast(m)
 
   def cast(%{"notice_type" => "group_recall"} = m), do: GroupRecall.cast(m)
+  def cast(%{notice_type: :group_recall} = m), do: GroupRecall.cast(m)
 
   def cast(%{"notice_type" => "group_upload"} = m), do: GroupUpload.cast(m)
+  def cast(%{notice_type: :group_upload} = m), do: GroupUpload.cast(m)
 
   def cast(%{"notice_type" => "friend_add"} = m), do: FriendAdd.cast(m)
+  def cast(%{notice_type: :friend_add} = m), do: FriendAdd.cast(m)
 
   def cast(%{"notice_type" => "friend_recall"} = m), do: FriendRecall.cast(m)
+  def cast(%{notice_type: :friend_recall} = m), do: FriendRecall.cast(m)
 
   def cast(t), do: {:error, "Unsupported notice event: #{inspect(t)}"}
 

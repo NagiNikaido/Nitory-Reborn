@@ -231,7 +231,7 @@ defmodule Nitory.Robot do
         reply_to_session(self(), "#{error_msg}")
 
       {:error, error_package} ->
-        Logger.warning(inspect(error_package))
+        Logger.warning("[#{__MODULE__}] #{inspect(error_package)}")
 
       :error ->
         reply_to_session(self(), "* 未知错误")
@@ -244,7 +244,7 @@ defmodule Nitory.Robot do
   @impl true
   def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
     # Shouldn't be here, but let's just log it.
-    Logger.warning("#{inspect(pid)} down due to #{inspect(reason)}.")
+    Logger.warning("[#{__MODULE__}] #{inspect(pid)} down due to #{inspect(reason)}.")
     {:noreply, state}
   end
 
