@@ -169,12 +169,12 @@ defmodule Nitory.Plugins.Khst do
          pic = List.first(Enum.take_random(pics, 1)),
          uri = URI.merge("file://", pic.path),
          msg = [Nitory.Message.Segment.Image.new!(%{data: %{file: to_string(uri)}})],
-         {:ok, message_id} =
+         {:ok, data} =
            GenServer.call(
              Nitory.ApiHandler,
              {:send_group_msg, %{group_id: group_id, message: msg}}
            ),
-         {:ok, _} <- add_history(message_id, keyword, group_id, pic.hash_sum) do
+         {:ok, _} <- add_history(data.message_id, keyword, group_id, pic.hash_sum) do
       :ok
     else
       error -> error
