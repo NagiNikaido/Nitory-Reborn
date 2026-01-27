@@ -156,7 +156,7 @@ defmodule Nitory.Command do
         parse_optional_arguments(cmd, rest_opts, args, parsed_opts ++ [{opt.name, nil}])
 
       true ->
-        {:error, {:wrong_argement, cmd, opt.name}}
+        {:error, {:wrong_argument, cmd, opt.name}}
     end
   end
 end
