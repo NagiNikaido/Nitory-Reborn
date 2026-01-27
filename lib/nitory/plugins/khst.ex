@@ -152,33 +152,68 @@ defmodule Nitory.Plugins.Khst do
     end
   end
 
-  def save_remote_and_add_image(url, keyword, group_id, path_prefix, message_id) do
-    with {:ok, content, hash_sum, ext} <- get_remote(url),
-         path = Path.join(path_prefix, "#{hash_sum}.#{ext}"),
-         {:ok, {first_met, count}} <- add_picture(keyword, group_id, hash_sum, path),
-         {:ok, _} <- add_history(message_id, keyword, group_id, hash_sum),
-         :ok <- if(first_met, do: save_picture(path, content), else: :ok) do
-      {:ok, "* 已添加图片 #{keyword}#{count}"}
-    else
-      error -> error
-    end
+  def save_remote_and_add_picture(url, keyword, group_id, path_prefix, message_id) do
+    Nitory.Repo.transact(fn ->
+      with {:ok, content, hash_sum, ext} <- get_remote(url),
+           path = Path.join(path_prefix, "#{hash_sum}.#{ext}"),
+           {:ok, {first_met, count}} <- add_picture(keyword, group_id, hash_sum, path),
+           {:ok, _} <- add_history(message_id, keyword, group_id, hash_sum),
+           :ok <- if(first_met, do: save_picture(path, content), else: :ok) do
+        {:ok, "* 已添加图片 #{keyword}#{count}"}
+      else
+        error -> error
+      end
+    end)
   end
 
   def pick_responding_picture(keyword, group_id) do
-    with {:ok, pics} <- get_pictures_by_keyword(keyword, group_id),
-         pic = List.first(Enum.take_random(pics, 1)),
-         uri = URI.merge("file://", pic.path),
-         msg = [Nitory.Message.Segment.Image.new!(%{data: %{file: to_string(uri)}})],
-         {:ok, data} =
-           GenServer.call(
-             Nitory.ApiHandler,
-             {:send_group_msg, %{group_id: group_id, message: msg}}
-           ),
-         {:ok, _} <- add_history(data.message_id, keyword, group_id, pic.hash_sum) do
-      :ok
-    else
-      error -> error
+    res =
+      Nitory.Repo.transact(fn ->
+        with {:ok, pics} <- get_pictures_by_keyword(keyword, group_id),
+             pic = List.first(Enum.take_random(pics, 1)),
+             uri = URI.merge("file://", pic.path),
+             msg = [Nitory.Message.Segment.Image.new!(%{data: %{file: to_string(uri)}})],
+             {:ok, data} =
+               GenServer.call(
+                 Nitory.ApiHandler,
+                 {:send_group_msg, %{group_id: group_id, message: msg}}
+               ),
+             {:ok, _} <- add_history(data.message_id, keyword, group_id, pic.hash_sum) do
+          {:ok, :ok}
+        else
+          error -> error
+        end
+      end)
+
+    case res do
+      {:ok, _} -> :ok
+      _ -> res
     end
+  end
+
+  def remove_k2p_by_history(message_id, group_id) do
+    Nitory.Repo.transact(fn repo ->
+      existing_history = repo.get_by(History, message_id: message_id, group_id: group_id)
+
+      if existing_history == nil do
+        {:error, "* 未找到看话说图记录。是否回复错误？"}
+      else
+        query =
+          from k in Keyword2Picture,
+            where:
+              k.keyword == ^existing_history.keyword and
+                k.group_id == ^group_id and
+                k.picture_id == ^existing_history.picture_id
+
+        {res, _} = repo.delete_all(query)
+
+        if res == 0 do
+          {:error, "* 该图片已不在关键词\"#{existing_history.keyword}\"的条目中。是否已被删除？"}
+        else
+          {:ok, "* 已从关键词\"#{existing_history.keyword}\"的条目中删除了该图片"}
+        end
+      end
+    end)
   end
 
   @impl true
@@ -244,7 +279,7 @@ defmodule Nitory.Plugins.Khst do
     dispose_handle.()
 
     resp =
-      save_remote_and_add_image(
+      save_remote_and_add_picture(
         List.first(msg.message).data.url,
         keyword,
         state.session_id,
@@ -255,12 +290,32 @@ defmodule Nitory.Plugins.Khst do
     {:reply, resp, %{state | recv_dispose_handle: nil}}
   end
 
+  @impl true
+  def handle_call({:remove_khst, _msg, reply}, _from, state) do
+    resp =
+      if reply == nil do
+        {:error, "* 格式错误"}
+      else
+        remove_k2p_by_history(reply, state.session_id)
+      end
+
+    {:reply, resp, state}
+  end
+
   def cmd_khst(opts) do
     msg = Keyword.fetch!(opts, :msg)
     keyword = Keyword.fetch!(opts, :keyword)
     server = Keyword.fetch!(opts, :server)
 
     GenServer.call(server, {:add_khst, msg, keyword})
+  end
+
+  def cmd_remove(opts) do
+    msg = Keyword.fetch!(opts, :msg)
+    reply = Keyword.fetch!(opts, :reply)
+    server = Keyword.fetch!(opts, :server)
+
+    GenServer.call(server, {:remove_khst, msg, reply})
   end
 
   defcommand(
@@ -289,4 +344,38 @@ defmodule Nitory.Plugins.Khst do
     9< * 没有合适的图片……
     """
   )
+
+  defcommand(
+    display_name: "rm",
+    hidden: false,
+    msg_type: :group,
+    short_usage: "删除看话说图条目",
+    cmd_face: "rm",
+    options: [],
+    action: {__MODULE__, :cmd_remove, []},
+    usage: """
+    删除看话说图条目
+    选中 bot 发出的图回复 .rm 即可将该图从对应关键词中删除
+    """
+  )
+
+  # defcommand(
+  #   display_name: "tag",
+  #   hidden: false,
+  #   msg_type: :group,
+  #   short_usage: "修改或查看看话说图条目的标签",
+  #   cmd_face: "tag",
+  #   options: [%Nitory.Command.Option{name: :tags, optional: true}],
+  #   action: {__MODULE__, :cmd_tag, []},
+  #   usage: """
+  #   修改或查看看话说图条目的标签
+  #   选中图片回复 .tag 即可查看该图现有标签
+  #   回复 .tag [+/-标签] 即可添加或删除对应标签
+  #   回复 .tag ! 即可清空该图现有标签
+  #   回复 .tag ![+/-标签] 即可清空现有标签，并添加新的标签
+  #   可同时增减多枚标签，如
+  #   .tag +美味-搞笑        为图片添加"美味"标签，并删除"搞笑"标签
+  #   .tag !+美味+搞笑-音乐   清空现有标签，并为图片添加"美味"和"搞笑"标签，并删除"音乐"标签（由于已被清空，因此该删除操作并无实际效果）
+  #   """
+  # )
 end

@@ -5,7 +5,7 @@ defmodule Nitory.Repo.Migrations.CreateNickname do
     create table(:nickname) do
       add :user_id, :integer
       add :group_id, :integer
-      add :nick, :string
+      add :nick, :string, null: false
     end
   end
 end
