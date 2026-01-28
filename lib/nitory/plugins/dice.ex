@@ -6,7 +6,9 @@ defmodule Nitory.Plugins.Dice do
   def handle_call({:roll_dice, expr, default_dice, msg, desc, hidden}, _from, state) do
     res =
       try do
-        with {:ok, ast} <- DiceExpr.parse(expr, default_dice) do
+        normalized_expr = if expr == nil, do: DiceAST.to_string(default_dice), else: expr
+
+        with {:ok, ast} <- DiceExpr.parse(normalized_expr, default_dice) do
           %{full_lit: lit, formatted_res: fmt_res} = DiceExpr.eval(ast)
           default_nick = msg.sender.nickname
           user_id = msg.user_id
@@ -41,7 +43,7 @@ defmodule Nitory.Plugins.Dice do
   def roll_dice(opts) do
     hidden = Keyword.get(opts, :hidden) == "h"
     default_dice = Keyword.get(opts, :default_dice)
-    expr = Keyword.get(opts, :expr, DiceAST.to_string(default_dice))
+    expr = Keyword.get(opts, :expr)
     desc = Keyword.get(opts, :desc)
     msg = Keyword.get(opts, :msg)
     server = Keyword.fetch!(opts, :server)
