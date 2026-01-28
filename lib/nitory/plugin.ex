@@ -1,9 +1,5 @@
 defmodule Nitory.Plugin do
   defmacro __using__(_opt) do
-    module = __CALLER__.module
-    Module.register_attribute(module, :commands, accumulate: true)
-    Module.register_attribute(module, :visible_commands, accumulate: true)
-
     quote location: :keep do
       use GenServer
       import unquote(__MODULE__)
@@ -44,15 +40,6 @@ defmodule Nitory.Plugin do
       end
 
       @impl true
-      def list_commands(show_hidden) do
-        if show_hidden do
-          @commands
-        else
-          @visible_commands
-        end
-      end
-
-      @impl true
       def capture_extra_args(_), do: %{}
 
       @impl true
@@ -65,25 +52,6 @@ defmodule Nitory.Plugin do
     end
   end
 
-  defmacro defcommand(opts) do
-    module = __CALLER__.module
-
-    opts =
-      Enum.map(opts, fn {key, val} -> {key, elem(Code.eval_quoted(val, [], __CALLER__), 0)} end)
-
-    {:ok, command} = Nitory.Command.new(opts)
-
-    Module.put_attribute(module, :commands, command)
-
-    if not command.hidden do
-      Module.put_attribute(module, :visible_commands, command)
-    end
-
-    quote do
-    end
-  end
-
-  @callback list_commands(boolean()) :: [Nitory.Command.t()]
   @callback capture_extra_args(keyword()) :: map()
   @callback init_plugin(map()) :: map()
   @callback plugin_name() :: String.t()

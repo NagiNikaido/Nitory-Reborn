@@ -48,16 +48,21 @@ defmodule Nitory.Plugins.Help do
     end
   end
 
-  defcommand(
-    display_name: "help",
-    hidden: false,
-    short_usage: "显示本帮助",
-    cmd_face: "help",
-    options: [%Option{name: :cmd, optional: true}],
-    action: {__MODULE__, :print_help, []},
-    usage: """
-    帮助指令
-    .help [指令] 可查看对应指令的详细说明
-    """
-  )
+  @impl true
+  def init_plugin(state) do
+    Nitory.Robot.register_command(state.robot,
+      display_name: "help",
+      hidden: false,
+      short_usage: "显示本帮助",
+      cmd_face: "help",
+      options: [%Option{name: :cmd, optional: true}],
+      action: {__MODULE__, :print_help, []},
+      usage: """
+      帮助指令
+      .help [指令] 可查看对应指令的详细说明
+      """
+    )
+
+    state
+  end
 end

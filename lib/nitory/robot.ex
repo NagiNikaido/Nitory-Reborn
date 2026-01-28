@@ -69,6 +69,7 @@ defmodule Nitory.Robot do
        session_prefix: session_prefix,
        robot_sv: robot_sv,
        plugins: plugins,
+       commands: [],
        middleware: middleware
      }}
   end
@@ -101,16 +102,23 @@ defmodule Nitory.Robot do
     end
   end
 
-  def list_commands(plugins, show_hidden) do
-    Enum.reduce(plugins, [], fn {plugin, _, loc}, acc ->
-      acc ++ (apply(plugin, :list_commands, [show_hidden]) |> Enum.map(fn cmd -> {loc, cmd} end))
-    end)
+  @impl true
+  def handle_call({:list_commands, show_hidden}, _from, %{commands: cmds} = state) do
+    if show_hidden do
+      cmds
+    else
+      Enum.filter(cmds, fn {_, cmd} -> not cmd.hidden end)
+    end
+
+    {:reply, cmds, state}
   end
 
   @impl true
-  def handle_call({:list_commands, show_hidden}, _from, %{plugins: plugins} = state) do
-    cmds = list_commands(plugins, show_hidden)
-    {:reply, cmds, state}
+  def handle_call({:register_command, opts}, from, %{commands: cmds} = state) do
+    case Nitory.Command.new(opts) do
+      {:ok, nc} -> {:reply, :ok, %{state | commands: [{from, nc} | cmds]}}
+      {:error, err} -> {:reply, {:error, err}, state}
+    end
   end
 
   @impl true
@@ -124,6 +132,7 @@ defmodule Nitory.Robot do
 
   @impl true
   def handle_cast({:deferred_init}, state) do
+    server = self()
     %{middleware: middleware, plugins: plugins} = state
 
     Nitory.Middleware.register(middleware, fn msg, next ->
@@ -134,7 +143,7 @@ defmodule Nitory.Robot do
         raw_args = List.first(message).data.text |> String.slice(1..-1//1) |> String.split()
 
         res =
-          list_commands(plugins, true)
+          all_commands(server)
           |> Enum.map(fn {loc, cmd} ->
             res = Nitory.Command.parse(cmd, raw_args, msg: msg, reply: reply, at: at)
 
@@ -251,6 +260,8 @@ defmodule Nitory.Robot do
   def all_commands(pid), do: GenServer.call(pid, {:list_commands, true})
 
   def all_visible_commands(pid), do: GenServer.call(pid, {:list_commands, false})
+
+  def register_command(pid, opts), do: GenServer.call(pid, {:register_command, opts})
 
   def reply_to_session(pid, msg), do: GenServer.cast(pid, {:send_to_session, :reply, msg})
 
