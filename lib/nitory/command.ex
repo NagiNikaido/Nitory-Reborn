@@ -135,13 +135,13 @@ defmodule Nitory.Command do
   def parse_optional_arguments(cmd, [], args, _), do: {:error, {:unparsed_arguments, cmd, args}}
 
   def parse_optional_arguments(cmd, [:rest], args, parsed_opts),
-    do: {:ok, {cmd, parsed_opts ++ args}}
+    do: {:ok, {cmd, parsed_opts ++ [{:rest, args}]}}
 
   def parse_optional_arguments(cmd, [:rest | _], _, _), do: {:error, {:options_after_rest, cmd}}
 
   def parse_optional_arguments(cmd, [opt | rest_opts], [], parsed_opts) do
     if opt.optional do
-      parse_optional_arguments(cmd, rest_opts, [], parsed_opts ++ [nil])
+      parse_optional_arguments(cmd, rest_opts, [], parsed_opts ++ [{opt.name, nil}])
     else
       {:error, {:wrong_argument, cmd, opt.name}}
     end
