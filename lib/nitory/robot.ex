@@ -104,13 +104,14 @@ defmodule Nitory.Robot do
 
   @impl true
   def handle_call({:list_commands, show_hidden}, _from, %{commands: cmds} = state) do
-    if show_hidden do
-      cmds
-    else
-      Enum.filter(cmds, fn {_, cmd} -> not cmd.hidden end)
-    end
+    res =
+      if show_hidden do
+        cmds
+      else
+        Enum.filter(cmds, fn {_, cmd} -> not cmd.hidden end)
+      end
 
-    {:reply, cmds, state}
+    {:reply, res, state}
   end
 
   @impl true
