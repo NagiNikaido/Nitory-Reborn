@@ -24,7 +24,7 @@ defmodule Nitory.MixProject do
   def application do
     [
       mod: {Nitory.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :os_mon]
     ]
   end
 
@@ -46,6 +46,7 @@ defmodule Nitory.MixProject do
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
       {:ecto_sqlite3, ">= 0.0.0"},
+      {:ecto_sqlite3_extras, "~> 1.2.0"},
       {:phoenix_live_dashboard, "~> 0.8.3"},
       {:swoosh, "~> 1.5"},
       {:finch, "~> 0.13"},

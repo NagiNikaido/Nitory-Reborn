@@ -2,6 +2,7 @@ image: archlinux
 packages:
     - elixir
     - erlang
+    - erlang-os_mon 
     - zig
     - 7zip
 
