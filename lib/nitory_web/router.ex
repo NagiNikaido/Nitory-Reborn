@@ -24,5 +24,34 @@ defmodule NitoryWeb.Router do
       live_dashboard "/dashboard", metrics: NitoryWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
+  else
+    import Phoenix.LiveDashboard.Router
+
+    pipeline :admins_only do
+      plug :admin_basic_auth
+    end
+
+    scope "/" do
+      pipe_through [:browser, :admins_only]
+      live_dashboard "/dashboard"
+    end
+
+    defp admin_basic_auth(conn, _opts) do
+      username =
+        System.get_env("AUTH_USERNAME") ||
+          raise """
+          environment variable AUTH_USERNAME is missing.
+          For example: andy
+          """
+
+      password =
+        System.get_env("AUTH_PASSWORD") ||
+          raise """
+          environment variable AUTH_PASSWORD is missing.
+          For example: <your password here>
+          """
+
+      Plug.BasicAuth.basic_auth(conn, username: username, password: password)
+    end
   end
 end
