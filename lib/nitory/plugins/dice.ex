@@ -48,10 +48,7 @@ defmodule Nitory.Plugins.Dice do
     {dice_cnt, opts} = Keyword.pop(opts, :dice_cnt, "")
     {appendix, opts} = Keyword.pop(opts, :appendix, "")
 
-    roll_dice([
-      {:expr, "#{dice_cnt}d#{appendix}"},
-      {:default_dice, DiceAST.parse!("1d20")} | opts
-    ])
+    roll_dice([{:expr, "#{dice_cnt}d#{appendix}"} | opts])
   end
 
   defcommand(

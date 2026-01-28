@@ -89,7 +89,7 @@ defmodule Nitory.Command do
     [given_cmd | rest_args] = raw_args
     bindings = Regex.named_captures(regex, given_cmd, capture: binding_list)
 
-    if bindings do
+    if !!bindings do
       if cmd.msg_type == nil or cmd.msg_type == msg.message_type do
         bindings = Enum.map(bindings, fn {key, val} -> {String.to_existing_atom(key), val} end)
 
@@ -102,7 +102,7 @@ defmodule Nitory.Command do
     end
   end
 
-  def parse(%{cmd_face: cmd_face} = cmd, raw_args, opt) do
+  def parse(%{cmd_face: cmd_face} = cmd, raw_args, opt) when is_binary(cmd_face) do
     msg = Keyword.fetch!(opt, :msg)
     [given_cmd | rest_args] = raw_args
 
