@@ -118,8 +118,19 @@ defmodule Nitory.Robot do
     {server, opts} = Keyword.pop!(opts, :server)
 
     case Nitory.Command.new(opts) do
-      {:ok, nc} -> {:reply, :ok, %{state | commands: [{server, nc} | cmds]}}
-      {:error, err} -> {:reply, {:error, err}, state}
+      {:ok, nc} ->
+        Logger.info(
+          "[#{__MODULE__}] Successfully registered command #{inspect(nc, pretty: true)}"
+        )
+
+        {:noreply, %{state | commands: [{server, nc} | cmds]}}
+
+      {:error, err} ->
+        Logger.error(
+          "[#{__MODULE__}] Failed to register command #{inspect(opts, pretty: true)} with error reason: #{inspect(err)}"
+        )
+
+        {:noreply, state}
     end
   end
 
