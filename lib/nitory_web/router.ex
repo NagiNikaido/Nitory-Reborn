@@ -31,9 +31,17 @@ defmodule NitoryWeb.Router do
       plug :admin_basic_auth
     end
 
+    pipeline :browser do
+      plug :accepts, ["html"]
+      plug :fetch_session
+      plug :fetch_live_flash
+      plug :protect_from_forgery
+      plug :put_secure_browser_headers
+    end
+
     scope "/" do
       pipe_through [:browser, :admins_only]
-      live_dashboard "/dashboard"
+      live_dashboard "/dashboard", metrics: NitoryWeb.Telemetry
     end
 
     defp admin_basic_auth(conn, _opts) do
