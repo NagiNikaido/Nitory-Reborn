@@ -102,7 +102,7 @@ defmodule Nitory.Plugins.Dice do
 
   defcommand(
     cmd_face:
-      {~r'^r(?<hidden>h?)(?<dice_cnt>\d+)(?<appendix>[+\-*\/]\d+)$',
+      {~r'^r(?<hidden>h?)(?<dice_cnt>(\d+)?)(?<appendix>([+\-*\/]\d+)?)$',
        [:hidden, :dice_cnt, :appendix]},
     hidden: true,
     options: [%Nitory.Command.Option{name: :desc, optional: true}],
