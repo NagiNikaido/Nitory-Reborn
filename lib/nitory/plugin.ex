@@ -52,7 +52,7 @@ defmodule Nitory.Plugin do
       def handle_call({:deferred_init}, _from, state), do: {:reply, :ok, init_plugin(state)}
 
       @impl true
-      def handle_call({:list_commands}, _from, state), do: {:reply, :ok, state.commands}
+      def handle_call({:list_commands}, _from, state), do: {:reply, state.commands, state}
     end
   end
 
