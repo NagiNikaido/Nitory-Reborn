@@ -103,7 +103,8 @@ defmodule Nitory.Robot do
 
   def list_commands(plugins, show_hidden) do
     Enum.reduce(plugins, [], fn {plugin, _, loc}, acc ->
-      acc ++ (apply(plugin, :list_commands, [show_hidden]) |> Enum.map(fn cmd -> {loc, cmd} end))
+      acc ++
+        (apply(plugin, :list_commands, [loc, show_hidden]) |> Enum.map(fn cmd -> {loc, cmd} end))
     end)
   end
 

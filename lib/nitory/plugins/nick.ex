@@ -53,19 +53,24 @@ defmodule Nitory.Plugins.Nick do
     end
   end
 
-  defcommand(
-    display_name: "nn",
-    cmd_face: "nn",
-    hidden: false,
-    msg_type: :group,
-    short_usage: "设置昵称",
-    options: [%Nitory.Command.Option{name: :nickname, optional: true}],
-    action: {__MODULE__, :cmd_set_nick, []},
-    usage: """
-    设置昵称
-    .nn [新昵称]  将本群组中的昵称设置为新昵称
-    默认昵称为QQ昵称
-    如将新昵称留空，则将当前昵称恢复为默认昵称
-    """
-  )
+  @impl true
+  def init_plugin(state) do
+    register_command(self(),
+      display_name: "nn",
+      cmd_face: "nn",
+      hidden: false,
+      msg_type: :group,
+      short_usage: "设置昵称",
+      options: [%Nitory.Command.Option{name: :nickname, optional: true}],
+      action: {__MODULE__, :cmd_set_nick, []},
+      usage: """
+      设置昵称
+      .nn [新昵称]  将本群组中的昵称设置为新昵称
+      默认昵称为QQ昵称
+      如将新昵称留空，则将当前昵称恢复为默认昵称
+      """
+    )
+
+    state
+  end
 end

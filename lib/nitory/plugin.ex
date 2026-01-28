@@ -1,9 +1,5 @@
 defmodule Nitory.Plugin do
   defmacro __using__(_opt) do
-    module = __CALLER__.module
-    Module.register_attribute(module, :commands, accumulate: true)
-    Module.register_attribute(module, :visible_commands, accumulate: true)
-
     quote location: :keep do
       use GenServer
       import unquote(__MODULE__)
@@ -39,16 +35,20 @@ defmodule Nitory.Plugin do
            session_type: session_type,
            session_prefix: session_prefix,
            middleware: middleware,
+           commands: [],
            robot: robot
          })}
       end
 
       @impl true
-      def list_commands(show_hidden) do
-        if show_hidden do
-          @commands
-        else
-          @visible_commands
+      def list_commands(server, show_hidden),
+        do: GenServer.call(server, {:list_commands, show_hidden})
+
+      @impl true
+      def register_command(server, opts) do
+        case Nitory.Command.new(opts) do
+          {:ok, nc} -> GenServer.cast(server, {:register_command, nc})
+          {:error, err} -> {:error, err}
         end
       end
 
@@ -61,29 +61,28 @@ defmodule Nitory.Plugin do
       defoverridable(init_plugin: 1, capture_extra_args: 1)
 
       @impl true
+      def handle_call({:list_commands, show_hidden}, _from, state) do
+        res =
+          if show_hidden do
+            state.commands
+          else
+            Enum.filter(state.commands, fn cmd -> not cmd.hidden end)
+          end
+
+        {:reply, res, state}
+      end
+
+      @impl true
       def handle_cast({:deferred_init}, state), do: {:noreply, init_plugin(state)}
+
+      @impl true
+      def handle_cast({:register_command, nc}, %{commands: cmds} = state),
+        do: {:noreply, %{state | commands: [nc | cmds]}}
     end
   end
 
-  defmacro defcommand(opts) do
-    module = __CALLER__.module
-
-    opts =
-      Enum.map(opts, fn {key, val} -> {key, elem(Code.eval_quoted(val, [], __CALLER__), 0)} end)
-
-    {:ok, command} = Nitory.Command.new(opts)
-
-    Module.put_attribute(module, :commands, command)
-
-    if not command.hidden do
-      Module.put_attribute(module, :visible_commands, command)
-    end
-
-    quote do
-    end
-  end
-
-  @callback list_commands(boolean()) :: [Nitory.Command.t()]
+  @callback list_commands(identifier(), boolean()) :: [Nitory.Command.t()]
+  @callback register_command(identifier(), keyword()) :: :ok | {:error, term()}
   @callback capture_extra_args(keyword()) :: map()
   @callback init_plugin(map()) :: map()
   @callback plugin_name() :: String.t()
