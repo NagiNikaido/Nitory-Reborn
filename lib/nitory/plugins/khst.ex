@@ -315,68 +315,67 @@ defmodule Nitory.Plugins.Khst do
       end
     end)
 
-    Nitory.Robot.register_command(state.robot,
-      server: self(),
-      display_name: "khst",
-      hidden: false,
-      msg_type: :group,
-      short_usage: "看话说图",
-      cmd_face: "khst",
-      options: [%Nitory.Command.Option{name: :keyword, optional: false}],
-      action: {__MODULE__, :cmd_khst, []},
-      usage: """
-      看话说图
-      .khst [关键词]  为关键词添加随机图片项
-      输入指令后 bot 会进入交互模式，等待输入指令者发出图片。
-      添加完成后，再次输入关键词，bot 便会从已添加的所有图片中随机选取一张发出。
-      如果在关键词之后附加标签，则会在符合标签的图片中随机选取一张发出，如：
-      （以下用>表示信息从用户处发出，用<表示信息从bot处发出）
-      1> .khst test
-      2> [图片]
-      3< (添加成功信息)
-      4> [引用信息2] .tag +good
-      5< (添加成功信息)
-      6> test +good
-      7< [信息2中图片]
-      8> test -good
-      9< * 没有合适的图片……
-      """
-    )
+    commands = [
+      Nitory.Command.new!(
+        display_name: "khst",
+        hidden: false,
+        msg_type: :group,
+        short_usage: "看话说图",
+        cmd_face: "khst",
+        options: [%Nitory.Command.Option{name: :keyword, optional: false}],
+        action: {__MODULE__, :cmd_khst, []},
+        usage: """
+        看话说图
+        .khst [关键词]  为关键词添加随机图片项
+        输入指令后 bot 会进入交互模式，等待输入指令者发出图片。
+        添加完成后，再次输入关键词，bot 便会从已添加的所有图片中随机选取一张发出。
+        如果在关键词之后附加标签，则会在符合标签的图片中随机选取一张发出，如：
+        （以下用>表示信息从用户处发出，用<表示信息从bot处发出）
+        1> .khst test
+        2> [图片]
+        3< (添加成功信息)
+        4> [引用信息2] .tag +good
+        5< (添加成功信息)
+        6> test +good
+        7< [信息2中图片]
+        8> test -good
+        9< * 没有合适的图片……
+        """
+      ),
+      Nitory.Command.new!(
+        display_name: "rm",
+        hidden: false,
+        msg_type: :group,
+        short_usage: "删除看话说图条目",
+        cmd_face: "rm",
+        options: [],
+        action: {__MODULE__, :cmd_remove, []},
+        usage: """
+        删除看话说图条目
+        选中 bot 发出的图回复 .rm 即可将该图从对应关键词中删除
+        """
+      )
+      # Nitory.Command.new!(
+      #   display_name: "tag",
+      #   hidden: false,
+      #   msg_type: :group,
+      #   short_usage: "修改或查看看话说图条目的标签",
+      #   cmd_face: "tag",
+      #   options: [%Nitory.Command.Option{name: :tags, optional: true}],
+      #   action: {__MODULE__, :cmd_tag, []},
+      #   usage: """
+      #   修改或查看看话说图条目的标签
+      #   选中图片回复 .tag 即可查看该图现有标签
+      #   回复 .tag [+/-标签] 即可添加或删除对应标签
+      #   回复 .tag ! 即可清空该图现有标签
+      #   回复 .tag ![+/-标签] 即可清空现有标签，并添加新的标签
+      #   可同时增减多枚标签，如
+      #   .tag +美味-搞笑        为图片添加"美味"标签，并删除"搞笑"标签
+      #   .tag !+美味+搞笑-音乐   清空现有标签，并为图片添加"美味"和"搞笑"标签，并删除"音乐"标签（由于已被清空，因此该删除操作并无实际效果）
+      #   """
+      # )
+    ]
 
-    Nitory.Robot.register_command(state.robot,
-      server: self(),
-      display_name: "rm",
-      hidden: false,
-      msg_type: :group,
-      short_usage: "删除看话说图条目",
-      cmd_face: "rm",
-      options: [],
-      action: {__MODULE__, :cmd_remove, []},
-      usage: """
-      删除看话说图条目
-      选中 bot 发出的图回复 .rm 即可将该图从对应关键词中删除
-      """
-    )
-
-    # Nitory.Robot.register_command(state.robot, server: self(),
-    #   display_name: "tag",
-    #   hidden: false,
-    #   msg_type: :group,
-    #   short_usage: "修改或查看看话说图条目的标签",
-    #   cmd_face: "tag",
-    #   options: [%Nitory.Command.Option{name: :tags, optional: true}],
-    #   action: {__MODULE__, :cmd_tag, []},
-    #   usage: """
-    #   修改或查看看话说图条目的标签
-    #   选中图片回复 .tag 即可查看该图现有标签
-    #   回复 .tag [+/-标签] 即可添加或删除对应标签
-    #   回复 .tag ! 即可清空该图现有标签
-    #   回复 .tag ![+/-标签] 即可清空现有标签，并添加新的标签
-    #   可同时增减多枚标签，如
-    #   .tag +美味-搞笑        为图片添加"美味"标签，并删除"搞笑"标签
-    #   .tag !+美味+搞笑-音乐   清空现有标签，并为图片添加"美味"和"搞笑"标签，并删除"音乐"标签（由于已被清空，因此该删除操作并无实际效果）
-    #   """
-    # )
-    state
+    %{state | commands: commands}
   end
 end

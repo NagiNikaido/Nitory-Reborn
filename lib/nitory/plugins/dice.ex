@@ -59,63 +59,62 @@ defmodule Nitory.Plugins.Dice do
 
   @impl true
   def init_plugin(state) do
-    Nitory.Robot.register_command(state.robot,
-      server: self(),
-      display_name: "r",
-      cmd_face: {~r'^r(?<hidden>h?)$', [:hidden]},
-      hidden: false,
-      short_usage: "掷骰指令（默认d20）",
-      options: [
-        %Nitory.Command.Option{
-          name: :expr,
-          optional: true,
-          predicator: &Nitory.Plugins.Dice.AST.dice_expr_leading?/1
-        },
-        %Nitory.Command.Option{name: :desc, optional: true}
-      ],
-      action: {__MODULE__, :roll_dice, [default_dice: DiceAST.parse!("1d20")]},
-      usage: """
-      掷骰指令（默认d20）
-      .r [重复次数#][掷骰表达式] [备注]
-      掷骰表达式为掷骰单元及常数组成的算术表达式
-      掷骰单元形如 [枚数][d面数][a目标下限][b目标上限][h取高枚数][l取低枚数][e追加目标]
-      其中：
-          目标下限：每掷出一个大于等于目标下限的骰子计为一个成功数
-          目标上限：每掷出一个小于等于目标上限的骰子计为一个成功数
-          取高枚数：取最高的若干枚骰子
-          取低枚数：取最低的若干枚骰子
-          追加目标：每掷出大于等于追加目标的结果则追加一枚骰子，若同时设定了目标上限则转为“小于等于追加目标”，其余不变
-      例：
-          3d6        掷3枚d6
-          2d20h1     掷2枚d20，取其中较高的1枚
-          3d20l2     掷2枚d20，取其中最低的2枚
-          6d20b5e1   掷6枚d20，每掷出小于等于5的结果就计为一次成功，每掷出小于等于1的结果就追加一枚骰子
-          6d10a8e10  掷6枚d10，每掷出大于等于8的结果就计为一次成功，每掷出大于等于10的结果就追加一枚骰子
-      需注意：
-          目标上限、目标下限、取高枚数与取低枚数最多有一项
-          取高枚数与取低枚数需小于等于总枚数
-          追加目标必须大于1（需要大于等于追加目标时）或小于面数（需要小于等于追加目标时），否则将无限追加
-      另外，.rh 指令用于暗骰，但需要添加好友才能收到信息
-      当掷骰较为简单时，可将枚数或运算合并至r上，如：
-          .r3  === .r 3d20
-          .r+2 === .r 1d20+2
-      此功能与暗骰可同时生效，如：
-          .rh3 === .rh 3d20
-          .rh*2 === .rh 1d20*2
-      但不支持括号，如 .r+(2*3)
-      """
-    )
+    commands = [
+      Nitory.Command.new!(
+        display_name: "r",
+        cmd_face: {~r'^r(?<hidden>h?)$', [:hidden]},
+        hidden: false,
+        short_usage: "掷骰指令（默认d20）",
+        options: [
+          %Nitory.Command.Option{
+            name: :expr,
+            optional: true,
+            predicator: &Nitory.Plugins.Dice.AST.dice_expr_leading?/1
+          },
+          %Nitory.Command.Option{name: :desc, optional: true}
+        ],
+        action: {__MODULE__, :roll_dice, [default_dice: DiceAST.parse!("1d20")]},
+        usage: """
+        掷骰指令（默认d20）
+        .r [重复次数#][掷骰表达式] [备注]
+        掷骰表达式为掷骰单元及常数组成的算术表达式
+        掷骰单元形如 [枚数][d面数][a目标下限][b目标上限][h取高枚数][l取低枚数][e追加目标]
+        其中：
+            目标下限：每掷出一个大于等于目标下限的骰子计为一个成功数
+            目标上限：每掷出一个小于等于目标上限的骰子计为一个成功数
+            取高枚数：取最高的若干枚骰子
+            取低枚数：取最低的若干枚骰子
+            追加目标：每掷出大于等于追加目标的结果则追加一枚骰子，若同时设定了目标上限则转为“小于等于追加目标”，其余不变
+        例：
+            3d6        掷3枚d6
+            2d20h1     掷2枚d20，取其中较高的1枚
+            3d20l2     掷2枚d20，取其中最低的2枚
+            6d20b5e1   掷6枚d20，每掷出小于等于5的结果就计为一次成功，每掷出小于等于1的结果就追加一枚骰子
+            6d10a8e10  掷6枚d10，每掷出大于等于8的结果就计为一次成功，每掷出大于等于10的结果就追加一枚骰子
+        需注意：
+            目标上限、目标下限、取高枚数与取低枚数最多有一项
+            取高枚数与取低枚数需小于等于总枚数
+            追加目标必须大于1（需要大于等于追加目标时）或小于面数（需要小于等于追加目标时），否则将无限追加
+        另外，.rh 指令用于暗骰，但需要添加好友才能收到信息
+        当掷骰较为简单时，可将枚数或运算合并至r上，如：
+            .r3  === .r 3d20
+            .r+2 === .r 1d20+2
+        此功能与暗骰可同时生效，如：
+            .rh3 === .rh 3d20
+            .rh*2 === .rh 1d20*2
+        但不支持括号，如 .r+(2*3)
+        """
+      ),
+      Nitory.Command.new!(
+        cmd_face:
+          {~r'^r(?<hidden>h?)((?<dice_cnt>(\d+))|(?<appendix>([+\-*\/]\d+)))$',
+           [:hidden, :dice_cnt, :appendix]},
+        hidden: true,
+        options: [%Nitory.Command.Option{name: :desc, optional: true}],
+        action: {__MODULE__, :roll_dice_abbr, [default_dice: DiceAST.parse!("1d20")]}
+      )
+    ]
 
-    Nitory.Robot.register_command(state.robot,
-      server: self(),
-      cmd_face:
-        {~r'^r(?<hidden>h?)((?<dice_cnt>(\d+))|(?<appendix>([+\-*\/]\d+)))$',
-         [:hidden, :dice_cnt, :appendix]},
-      hidden: true,
-      options: [%Nitory.Command.Option{name: :desc, optional: true}],
-      action: {__MODULE__, :roll_dice_abbr, [default_dice: DiceAST.parse!("1d20")]}
-    )
-
-    state
+    %{state | commands: commands}
   end
 end

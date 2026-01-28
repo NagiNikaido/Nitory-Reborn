@@ -35,6 +35,7 @@ defmodule Nitory.Plugin do
            session_type: session_type,
            session_prefix: session_prefix,
            middleware: middleware,
+           commands: [],
            robot: robot
          })}
       end
@@ -48,7 +49,10 @@ defmodule Nitory.Plugin do
       defoverridable(init_plugin: 1, capture_extra_args: 1)
 
       @impl true
-      def handle_cast({:deferred_init}, state), do: {:noreply, init_plugin(state)}
+      def handle_call({:deferred_init}, _from, state), do: {:reply, :ok, init_plugin(state)}
+
+      @impl true
+      def handle_call({:list_commands}, _from, state), do: {:reply, :ok, state.commands}
     end
   end
 

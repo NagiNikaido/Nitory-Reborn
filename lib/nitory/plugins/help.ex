@@ -14,6 +14,7 @@ defmodule Nitory.Plugins.Help do
               | &1
             ] ++ ["更多功能开发中"])).()
       |> Enum.map_join("\n", & &1)
+      |> String.trim_trailing()
 
     {:reply, {:ok, res}, state}
   end
@@ -25,6 +26,7 @@ defmodule Nitory.Plugins.Help do
       |> Enum.filter(fn {_, cmd} -> cmd.display_name == name end)
       |> Enum.map(fn {_, cmd} -> cmd.usage end)
       |> Enum.map_join("\n", & &1)
+      |> String.trim_trailing()
 
     if res == "" do
       {:reply, {:error, "* 未找到这条指令。是否输入错误？"}, state}
@@ -50,20 +52,21 @@ defmodule Nitory.Plugins.Help do
 
   @impl true
   def init_plugin(state) do
-    Nitory.Robot.register_command(state.robot,
-      server: self(),
-      display_name: "help",
-      hidden: false,
-      short_usage: "显示本帮助",
-      cmd_face: "help",
-      options: [%Option{name: :cmd, optional: true}],
-      action: {__MODULE__, :print_help, []},
-      usage: """
-      帮助指令
-      .help [指令] 可查看对应指令的详细说明
-      """
-    )
+    commands = [
+      Nitory.Command.new!(
+        display_name: "help",
+        hidden: false,
+        short_usage: "显示本帮助",
+        cmd_face: "help",
+        options: [%Option{name: :cmd, optional: true}],
+        action: {__MODULE__, :print_help, []},
+        usage: """
+        帮助指令
+        .help [指令] 可查看对应指令的详细说明
+        """
+      )
+    ]
 
-    state
+    %{state | commands: commands}
   end
 end

@@ -74,6 +74,14 @@ defmodule Nitory.Command do
     end
   end
 
+  @spec new!(keyword()) :: t()
+  def new!(opts) do
+    case new(opts) do
+      {:ok, res} -> res
+      {:error, err} -> raise "New Nitory.Command failed: #{err}"
+    end
+  end
+
   @spec parse(Nitory.Command.t(), [String.t()], [term()]) ::
           {:ok, {Nitory.Command.t(), [term()]}}
           | {:error,

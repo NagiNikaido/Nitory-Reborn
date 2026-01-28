@@ -114,27 +114,6 @@ defmodule Nitory.Robot do
   end
 
   @impl true
-  def handle_cast({:register_command, opts}, %{commands: cmds} = state) do
-    {server, opts} = Keyword.pop!(opts, :server)
-
-    case Nitory.Command.new(opts) do
-      {:ok, nc} ->
-        Logger.info(
-          "[#{__MODULE__}] Successfully registered command #{inspect(nc, pretty: true)}"
-        )
-
-        {:noreply, %{state | commands: [{server, nc} | cmds]}}
-
-      {:error, err} ->
-        Logger.error(
-          "[#{__MODULE__}] Failed to register command #{inspect(opts, pretty: true)} with error reason: #{inspect(err)}"
-        )
-
-        {:noreply, state}
-    end
-  end
-
-  @impl true
   def handle_cast({:message_in, msg}, %{middleware: middleware} = state) do
     Task.Supervisor.async_nolink(Nitory.TaskSupervisor, fn ->
       Nitory.Middleware.excute(middleware, msg)
@@ -177,11 +156,16 @@ defmodule Nitory.Robot do
       end
     end)
 
-    Enum.each(plugins, fn {_, _, loc} ->
-      GenServer.cast(loc, {:deferred_init})
-    end)
+    cmds =
+      Enum.reduce(plugins, [], fn {_, _, loc}, acc ->
+        GenServer.call(loc, {:deferred_init})
 
-    {:noreply, state}
+        acc ++
+          (GenServer.call(loc, {:list_commands})
+           |> Enum.map(fn cmd -> {loc, cmd} end))
+      end)
+
+    {:noreply, %{state | commands: cmds}}
   end
 
   @impl true
@@ -273,8 +257,6 @@ defmodule Nitory.Robot do
   def all_commands(pid), do: GenServer.call(pid, {:list_commands, true})
 
   def all_visible_commands(pid), do: GenServer.call(pid, {:list_commands, false})
-
-  def register_command(pid, opts), do: GenServer.cast(pid, {:register_command, opts})
 
   def reply_to_session(pid, msg), do: GenServer.cast(pid, {:send_to_session, :reply, msg})
 

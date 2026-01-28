@@ -54,23 +54,24 @@ defmodule Nitory.Plugins.Nick do
   end
 
   def init_plugin(state) do
-    Nitory.Robot.register_command(state.robot,
-      server: self(),
-      display_name: "nn",
-      cmd_face: "nn",
-      hidden: false,
-      msg_type: :group,
-      short_usage: "设置昵称",
-      options: [%Nitory.Command.Option{name: :nickname, optional: true}],
-      action: {__MODULE__, :cmd_set_nick, []},
-      usage: """
-      设置昵称
-      .nn [新昵称]  将本群组中的昵称设置为新昵称
-      默认昵称为QQ昵称
-      如将新昵称留空，则将当前昵称恢复为默认昵称
-      """
-    )
+    commands = [
+      Nitory.Command.new!(
+        display_name: "nn",
+        cmd_face: "nn",
+        hidden: false,
+        msg_type: :group,
+        short_usage: "设置昵称",
+        options: [%Nitory.Command.Option{name: :nickname, optional: true}],
+        action: {__MODULE__, :cmd_set_nick, []},
+        usage: """
+        设置昵称
+        .nn [新昵称]  将本群组中的昵称设置为新昵称
+        默认昵称为QQ昵称
+        如将新昵称留空，则将当前昵称恢复为默认昵称
+        """
+      )
+    ]
 
-    state
+    %{state | commands: commands}
   end
 end
