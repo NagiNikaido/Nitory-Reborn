@@ -8,7 +8,7 @@ defmodule Nitory.Events.Request.FriendRequest do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :request_type, Nitory.Events.Request.Types
     field! :user_id, :integer
     field! :comment, :string
@@ -22,7 +22,7 @@ defmodule Nitory.Events.Request.GroupRequest do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :request_type, Nitory.Events.Request.Types
     field! :user_id, :integer
     field! :comment, :string

@@ -1,15 +1,15 @@
-defmodule Nitory.Events.Message.Types do
+defmodule Nitory.Events.IncomingMessage.Types do
   use Flint.Type, extends: Ecto.Enum, values: [:group, :private]
 end
 
-defmodule Nitory.Events.Message.PrivateMessage do
+defmodule Nitory.Events.IncomingMessage.PrivateMessage do
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
-    field! :message_type, Nitory.Events.Message.Types
+    field! :post_type, Nitory.Event.Types
+    field! :message_type, Nitory.Events.IncomingMessage.Types
     field! :message_id, :integer
     field! :user_id, :integer
     field! :message, Nitory.Message
@@ -29,14 +29,14 @@ defmodule Nitory.Events.Message.PrivateMessage do
   end
 end
 
-defmodule Nitory.Events.Message.GroupMessage do
+defmodule Nitory.Events.IncomingMessage.GroupMessage do
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
-    field! :message_type, Nitory.Events.Message.Types
+    field! :post_type, Nitory.Event.Types
+    field! :message_type, Nitory.Events.IncomingMessage.Types
     field! :sub_type, Ecto.Enum, values: [:normal, :anonymous, :notice]
     field! :message_id, :integer
     field! :user_id, :integer
@@ -55,10 +55,10 @@ defmodule Nitory.Events.Message.GroupMessage do
   end
 end
 
-defmodule Nitory.Events.Message do
+defmodule Nitory.Events.IncomingMessage do
   use Ecto.Type
 
-  alias Nitory.Events.Message.{GroupMessage, PrivateMessage}
+  alias Nitory.Events.IncomingMessage.{GroupMessage, PrivateMessage}
 
   @type t :: GroupMessage.t() | PrivateMessage.t()
 
@@ -71,7 +71,7 @@ defmodule Nitory.Events.Message do
   def cast(%{"message_type" => "private"} = m), do: PrivateMessage.cast(m)
   def cast(%{message_type: :private} = m), do: PrivateMessage.cast(m)
 
-  def cast(t), do: {:error, "Unsupported message event: #{inspect(t)}"}
+  def cast(t), do: {:error, "Unsupported incoming message event: #{inspect(t)}"}
 
   def dump(_), do: :error
 

@@ -25,9 +25,9 @@ defmodule Nitory.EventsTest do
 
     assert msg
            |> Jason.decode!()
-           |> Nitory.Events.cast() ==
+           |> Nitory.Event.cast() ==
              {:ok,
-              %Nitory.Events.Message.PrivateMessage{
+              %Nitory.Events.IncomingMessage.PrivateMessage{
                 time: 1_718_000_000,
                 post_type: :message,
                 message_type: :private,
@@ -37,7 +37,7 @@ defmodule Nitory.EventsTest do
                 message: [Nitory.Message.Segment.Text.new!(%{data: %{text: "你好"}})],
                 raw_message: "你好",
                 font: 0,
-                sender: %Nitory.Events.Message.PrivateMessage.Sender{
+                sender: %Nitory.Events.IncomingMessage.PrivateMessage.Sender{
                   user_id: 234_567_890,
                   nickname: "小明",
                   sex: :male,
@@ -72,9 +72,9 @@ defmodule Nitory.EventsTest do
 
     assert msg
            |> Jason.decode!()
-           |> Nitory.Events.cast() ==
+           |> Nitory.Event.cast() ==
              {:ok,
-              %Nitory.Events.Message.PrivateMessage{
+              %Nitory.Events.IncomingMessage.PrivateMessage{
                 time: 1_718_000_002,
                 post_type: :message,
                 message_type: :private,
@@ -86,7 +86,7 @@ defmodule Nitory.EventsTest do
                 message: [Nitory.Message.Segment.Text.new!(%{data: %{text: "临时会话消息"}})],
                 raw_message: "临时会话消息",
                 font: 0,
-                sender: %Nitory.Events.Message.PrivateMessage.Sender{
+                sender: %Nitory.Events.IncomingMessage.PrivateMessage.Sender{
                   user_id: 234_567_891,
                   nickname: "小红",
                   sex: :female
@@ -122,9 +122,9 @@ defmodule Nitory.EventsTest do
 
     assert msg
            |> Jason.decode!()
-           |> Nitory.Events.cast() ==
+           |> Nitory.Event.cast() ==
              {:ok,
-              %Nitory.Events.Message.GroupMessage{
+              %Nitory.Events.IncomingMessage.GroupMessage{
                 time: 1_718_000_001,
                 post_type: :message,
                 message_type: :group,
@@ -138,7 +138,7 @@ defmodule Nitory.EventsTest do
                 ],
                 raw_message: "[CQ:at,qq=123456789]大家好！",
                 font: 0,
-                sender: %Nitory.Events.Message.GroupMessage.Sender{
+                sender: %Nitory.Events.IncomingMessage.GroupMessage.Sender{
                   user_id: 345_678_901,
                   nickname: "群友A",
                   sex: :female,
@@ -161,7 +161,7 @@ defmodule Nitory.EventsTest do
 
     assert msg
            |> Jason.decode!()
-           |> Nitory.Events.cast() ==
+           |> Nitory.Event.cast() ==
              {:ok,
               %Nitory.Events.Echo{
                 status: :ok,

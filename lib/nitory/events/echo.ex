@@ -6,6 +6,6 @@ defmodule Nitory.Events.Echo do
     field! :retcode, :integer
     field :data, Union, oneof: [:map, {:array, :any}]
     field! :echo, :string
-    field! :post_type, Nitory.Events.Types, default: :echo
+    field! :post_type, Nitory.Event.Types, default: :echo
   end
 end

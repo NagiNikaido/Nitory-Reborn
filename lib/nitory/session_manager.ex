@@ -72,7 +72,7 @@ defmodule Nitory.SessionManager do
     # send(state.socket, {:receive, event})
     msg =
       with {:ok, ev} <- Jason.decode(event),
-           {:ok, ev_obj} <- Nitory.Events.cast(ev) do
+           {:ok, ev_obj} <- Nitory.Event.cast(ev) do
         send(self(), {:parsed_event, ev_obj})
         {:receive, Jason.encode!(ev_obj)}
       else

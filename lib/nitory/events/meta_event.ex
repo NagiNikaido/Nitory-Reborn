@@ -8,7 +8,7 @@ defmodule Nitory.Events.MetaEvent.Heartbeat do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :meta_event_type, Nitory.Events.MetaEvent.Types
 
     embeds_one! :status, Status do
@@ -26,7 +26,7 @@ defmodule Nitory.Events.MetaEvent.Lifecycle do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :meta_event_type, Nitory.Events.MetaEvent.Types
     field! :sub_type, Ecto.Enum, values: [:enable, :disable, :connect]
   end

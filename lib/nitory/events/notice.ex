@@ -19,7 +19,7 @@ defmodule Nitory.Events.Notice.GroupUpload do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :notice_type, Nitory.Events.Notice.Types
     field! :group_id, :integer
     field! :user_id, :integer
@@ -39,7 +39,7 @@ defmodule Nitory.Events.Notice.GroupAdmin do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :notice_type, Nitory.Events.Notice.Types
     field! :group_id, :integer
     field! :user_id, :integer
@@ -53,7 +53,7 @@ defmodule Nitory.Events.Notice.GroupDecrease do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :notice_type, Nitory.Events.Notice.Types
     field! :group_id, :integer
     field! :user_id, :integer
@@ -68,7 +68,7 @@ defmodule Nitory.Events.Notice.GroupIncrease do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :notice_type, Nitory.Events.Notice.Types
     field! :group_id, :integer
     field! :user_id, :integer
@@ -83,7 +83,7 @@ defmodule Nitory.Events.Notice.GroupBan do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :notice_type, Nitory.Events.Notice.Types
     field! :group_id, :integer
     field! :operator_id, :integer
@@ -99,7 +99,7 @@ defmodule Nitory.Events.Notice.GroupRecall do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :notice_type, Nitory.Events.Notice.Types
     field! :group_id, :integer
     field! :user_id, :integer
@@ -114,7 +114,7 @@ defmodule Nitory.Events.Notice.FriendAdd do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :notice_type, Nitory.Events.Notice.Types
     field! :user_id, :integer
   end
@@ -126,7 +126,7 @@ defmodule Nitory.Events.Notice.FriendRecall do
   embedded_schema do
     field! :time, :integer
     field! :self_id, :integer
-    field! :post_type, Nitory.Events.Types
+    field! :post_type, Nitory.Event.Types
     field! :notice_type, Nitory.Events.Notice.Types
     field! :user_id, :integer
     field! :message_id, :integer
