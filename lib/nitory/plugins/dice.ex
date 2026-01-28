@@ -5,30 +5,34 @@ defmodule Nitory.Plugins.Dice do
   @impl true
   def handle_call({:roll_dice, expr, default_dice, msg, desc, hidden}, _from, state) do
     res =
-      with {:ok, ast} <- DiceExpr.parse(expr, default_dice) do
-        %{full_lit: lit, formatted_res: fmt_res} = DiceExpr.eval(ast)
-        default_nick = msg.sender.nickname
-        user_id = msg.user_id
+      try do
+        with {:ok, ast} <- DiceExpr.parse(expr, default_dice) do
+          %{full_lit: lit, formatted_res: fmt_res} = DiceExpr.eval(ast)
+          default_nick = msg.sender.nickname
+          user_id = msg.user_id
 
-        nick =
-          if state.session_type == :group do
-            Nitory.Nickname.get_nick(user_id, state.session_id, default_nick)
+          nick =
+            if state.session_type == :group do
+              Nitory.Nickname.get_nick(user_id, state.session_id, default_nick)
+            else
+              default_nick
+            end
+
+          reply = ~s'#{nick} 掷骰 #{lit}#{if desc == nil, do: "", else: " (#{desc})"}:\n#{fmt_res}'
+
+          if hidden do
+            GenServer.cast(
+              Nitory.ApiHandler,
+              {:send_private_msg, %{user_id: user_id, message: reply}}
+            )
           else
-            default_nick
+            {:ok, reply}
           end
-
-        reply = ~s'#{nick} 掷骰 #{lit}#{if desc == nil, do: "", else: " (#{desc})"}:\n#{fmt_res}'
-
-        if hidden do
-          GenServer.cast(
-            Nitory.ApiHandler,
-            {:send_private_msg, %{user_id: user_id, message: reply}}
-          )
         else
-          {:ok, reply}
+          {:error, _} -> {:error, "* 格式错误"}
         end
-      else
-        {:error, _} -> {:error, "* 格式错误"}
+      rescue
+        ArithmeticError -> {:error, "* 算术错误"}
       end
 
     {:reply, res, state}
