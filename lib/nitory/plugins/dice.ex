@@ -60,6 +60,7 @@ defmodule Nitory.Plugins.Dice do
   @impl true
   def init_plugin(state) do
     Nitory.Robot.register_command(state.robot,
+      server: self(),
       display_name: "r",
       cmd_face: {~r'^r(?<hidden>h?)$', [:hidden]},
       hidden: false,
@@ -106,6 +107,7 @@ defmodule Nitory.Plugins.Dice do
     )
 
     Nitory.Robot.register_command(state.robot,
+      server: self(),
       cmd_face:
         {~r'^r(?<hidden>h?)((?<dice_cnt>(\d+))|(?<appendix>([+\-*\/]\d+)))$',
          [:hidden, :dice_cnt, :appendix]},

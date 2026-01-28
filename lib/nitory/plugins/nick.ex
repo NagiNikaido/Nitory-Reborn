@@ -55,6 +55,7 @@ defmodule Nitory.Plugins.Nick do
 
   def init_plugin(state) do
     Nitory.Robot.register_command(state.robot,
+      server: self(),
       display_name: "nn",
       cmd_face: "nn",
       hidden: false,

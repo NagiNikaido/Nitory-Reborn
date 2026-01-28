@@ -51,6 +51,7 @@ defmodule Nitory.Plugins.Help do
   @impl true
   def init_plugin(state) do
     Nitory.Robot.register_command(state.robot,
+      server: self(),
       display_name: "help",
       hidden: false,
       short_usage: "显示本帮助",

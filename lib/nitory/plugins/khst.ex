@@ -316,6 +316,7 @@ defmodule Nitory.Plugins.Khst do
     end)
 
     Nitory.Robot.register_command(state.robot,
+      server: self(),
       display_name: "khst",
       hidden: false,
       msg_type: :group,
@@ -343,6 +344,7 @@ defmodule Nitory.Plugins.Khst do
     )
 
     Nitory.Robot.register_command(state.robot,
+      server: self(),
       display_name: "rm",
       hidden: false,
       msg_type: :group,
@@ -356,7 +358,7 @@ defmodule Nitory.Plugins.Khst do
       """
     )
 
-    # Nitory.Robot.register_command(state.robot,
+    # Nitory.Robot.register_command(state.robot, server: self(),
     #   display_name: "tag",
     #   hidden: false,
     #   msg_type: :group,

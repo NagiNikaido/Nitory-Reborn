@@ -114,9 +114,11 @@ defmodule Nitory.Robot do
   end
 
   @impl true
-  def handle_call({:register_command, opts}, from, %{commands: cmds} = state) do
+  def handle_cast({:register_command, opts}, %{commands: cmds} = state) do
+    {server, opts} = Keyword.pop!(opts, :server)
+
     case Nitory.Command.new(opts) do
-      {:ok, nc} -> {:reply, :ok, %{state | commands: [{from, nc} | cmds]}}
+      {:ok, nc} -> {:reply, :ok, %{state | commands: [{server, nc} | cmds]}}
       {:error, err} -> {:reply, {:error, err}, state}
     end
   end
@@ -261,7 +263,7 @@ defmodule Nitory.Robot do
 
   def all_visible_commands(pid), do: GenServer.call(pid, {:list_commands, false})
 
-  def register_command(pid, opts), do: GenServer.call(pid, {:register_command, opts})
+  def register_command(pid, opts), do: GenServer.cast(pid, {:register_command, opts})
 
   def reply_to_session(pid, msg), do: GenServer.cast(pid, {:send_to_session, :reply, msg})
 
