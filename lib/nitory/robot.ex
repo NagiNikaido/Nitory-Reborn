@@ -35,15 +35,13 @@ defmodule Nitory.Robot do
         uuid = Ecto.UUID.generate()
 
         location =
-          {:via, Registry, {Nitory.SessionSlot, "#{session_prefix}:robot:#{uuid}"}}
+          {:via, Registry, {Nitory.SessionSlot, "#{session_prefix}:robot:#{name}:#{uuid}"}}
 
         {plugin_module, config, location, uuid}
       end)
 
     children =
       Enum.map(plugins, fn {plugin_module, config, location, uuid} ->
-        IO.inspect(location)
-
         Supervisor.child_spec(
           {plugin_module,
            [
