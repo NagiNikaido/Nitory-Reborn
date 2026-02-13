@@ -112,7 +112,7 @@ defmodule Nitory.Plugins.Dice do
         此功能与暗骰可同时生效，如：
             .#{cmd_face}h3 === .#{cmd_face} #{%{default_dice | cnt: 3}}
             .#{cmd_face}h*2 === .#{cmd_face}h #{default_dice}*2
-        但不支持括号，如 .r+(2*3)
+        但不支持括号，如 .#{cmd_face}+(2*3)
         """
       ),
       Nitory.Command.new!(
