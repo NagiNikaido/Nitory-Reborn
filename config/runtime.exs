@@ -29,7 +29,8 @@ if config_env() != :prod do
     plugins: [
       Nitory.Plugins.Help,
       Nitory.Plugins.Nick,
-      Nitory.Plugins.Dice,
+      {Nitory.Plugins.Dice, cmd_face: "r", default_dice: "1d20"},
+      {Nitory.Plugins.Dice, cmd_face: "w", default_dice: "1d10a8e10"},
       Nitory.Plugins.Khst
     ]
 end

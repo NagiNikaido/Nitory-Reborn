@@ -58,13 +58,23 @@ defmodule Nitory.Plugins.Dice do
   end
 
   @impl true
+  def capture_extra_args(keyword) do
+    {default_dice, keyword} = Keyword.pop!(keyword, :default_dice)
+    {cmd_face, _} = Keyword.pop!(keyword, :cmd_face)
+    %{default_dice: DiceAST.parse!(default_dice), cmd_face: cmd_face}
+  end
+
+  @impl true
   def init_plugin(state) do
+    default_dice = state.default_dice
+    cmd_face = state.cmd_face
+
     commands = [
       Nitory.Command.new!(
-        display_name: "r",
-        cmd_face: {~r'^r(?<hidden>h?)$', [:hidden]},
+        display_name: "#{cmd_face}",
+        cmd_face: {~r'^#{cmd_face}(?<hidden>h?)$', [:hidden]},
         hidden: false,
-        short_usage: "掷骰指令（默认d20）",
+        short_usage: "掷骰指令（默认#{default_dice}）",
         options: [
           %Nitory.Command.Option{
             name: :expr,
@@ -73,10 +83,10 @@ defmodule Nitory.Plugins.Dice do
           },
           %Nitory.Command.Option{name: :desc, optional: true}
         ],
-        action: {__MODULE__, :roll_dice, [default_dice: DiceAST.parse!("1d20")]},
+        action: {__MODULE__, :roll_dice, [default_dice: default_dice]},
         usage: """
-        掷骰指令（默认d20）
-        .r [重复次数#][掷骰表达式] [备注]
+        掷骰指令（默认#{default_dice}）
+        .#{cmd_face} [重复次数#][掷骰表达式] [备注]
         掷骰表达式为掷骰单元及常数组成的算术表达式
         掷骰单元形如 [枚数][d面数][a目标下限][b目标上限][h取高枚数][l取低枚数][e追加目标]
         其中：
@@ -95,23 +105,23 @@ defmodule Nitory.Plugins.Dice do
             目标上限、目标下限、取高枚数与取低枚数最多有一项
             取高枚数与取低枚数需小于等于总枚数
             追加目标必须大于1（需要大于等于追加目标时）或小于面数（需要小于等于追加目标时），否则将无限追加
-        另外，.rh 指令用于暗骰，但需要添加好友才能收到信息
-        当掷骰较为简单时，可将枚数或运算合并至r上，如：
-            .r3  === .r 3d20
-            .r+2 === .r 1d20+2
+        另外，.#{cmd_face}h 指令用于暗骰，但需要添加好友才能收到信息
+        当掷骰较为简单时，可将枚数或运算合并至#{cmd_face}上，如：
+            .#{cmd_face}3  === .#{cmd_face} #{%{default_dice | cnt: 3}}
+            .#{cmd_face}+2 === .#{cmd_face} #{default_dice}+2
         此功能与暗骰可同时生效，如：
-            .rh3 === .rh 3d20
-            .rh*2 === .rh 1d20*2
+            .#{cmd_face}h3 === .#{cmd_face} #{%{default_dice | cnt: 3}}
+            .#{cmd_face}h*2 === .#{cmd_face}h #{default_dice}*2
         但不支持括号，如 .r+(2*3)
         """
       ),
       Nitory.Command.new!(
         cmd_face:
-          {~r'^r(?<hidden>h?)((?<dice_cnt>(\d+))|(?<appendix>([+\-*\/]\d+)))$',
+          {~r'^#{cmd_face}(?<hidden>h?)((?<dice_cnt>(\d+))|(?<appendix>([+\-*\/]\d+)))$',
            [:hidden, :dice_cnt, :appendix]},
         hidden: true,
         options: [%Nitory.Command.Option{name: :desc, optional: true}],
-        action: {__MODULE__, :roll_dice_abbr, [default_dice: DiceAST.parse!("1d20")]}
+        action: {__MODULE__, :roll_dice_abbr, [default_dice: default_dice]}
       )
     ]
 
