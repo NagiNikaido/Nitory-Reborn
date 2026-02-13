@@ -39,21 +39,13 @@ defmodule Nitory.Plugins.Dice.AST do
                 c_dice = &1
 
                 cnt =
-                  default_dice.cnt
-                  |> (fn cnt ->
-                        with {:high, high} <- c_dice.opt do
-                          max(cnt, high + 1)
-                        else
-                          _ -> cnt
-                        end
-                      end).()
-                  |> (fn cnt ->
-                        with {:low, low} <- c_dice.opt do
-                          max(&1, low + 1)
-                        else
-                          _ -> cnt
-                        end
-                      end).()
+                  (fn cnt ->
+                     case c_dice.opt do
+                       {:high, high} -> max(cnt, high + 1)
+                       {:low, low} -> max(cnt, low + 1)
+                       _ -> cnt
+                     end
+                   end).(default_dice.cnt)
 
                 %{&1 | cnt: cnt}
               else
@@ -65,50 +57,20 @@ defmodule Nitory.Plugins.Dice.AST do
                 face =
                   default_dice.face
                   |> (fn face ->
-                        with {:lower_bound, lb} <- c_dice.opt do
-                          max(face, lb + 1)
-                        else
+                        case c_dice.opt do
+                          {:lower_bound, lb} -> max(face, lb + 1)
+                          {:upper_bound, ub} -> max(face, ub + 1)
                           _ -> face
                         end
                       end).()
                   |> (fn face ->
-                        with {:upper_bound, ub} <- c_dice.opt do
-                          max(face, ub + 1)
-                        else
-                          _ -> face
-                        end
-                      end).()
-                  |> (fn face ->
-                        if c_dice.extra != nil, do: max(face, c_dice.extra + 1), else: face
+                        if c_dice.extra != nil, do: max(face, c_dice.extra), else: face
                       end).()
 
-                %{&1 | face: face}
+                %{&1 | face: max(2, face)}
               else
                 &1
               end)).()
-
-      # if dice.opt == nil, do: ^dice = %{dice | opt: default_dice.opt}
-
-      # if dice.extra == nil, do: ^dice = %{dice | extra: default_dice.extra}
-
-      # if dice.cnt == nil do
-      #   cnt = default_dice.cnt
-      #   with {:high, high} <- dice.opt, do: ^cnt = max(cnt, high + 1)
-
-      #   with {:low, low} <- dice.opt, do: ^cnt = max(cnt, low + 1)
-      #   ^dice = %{dice | cnt: cnt}
-      # end
-
-      # if dice.face == nil do
-      #   face = default_dice.face
-
-      #   with {:lower_bound, lb} <- dice.opt, do: ^face = max(face, lb + 1)
-
-      #   with {:upper_bound, ub} <- dice.opt, do: ^face = max(face, ub + 1)
-
-      #   if dice.extra != nil, do: ^face = max(face, dice.extra + 1)
-      #   ^dice = %{dice | face: face}
-      # end
 
       if legal?(dice) do
         {:ok, dice}
