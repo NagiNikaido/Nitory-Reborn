@@ -18,6 +18,7 @@ defmodule Nitory.Plugin do
 
       @impl true
       def init(init_arg) do
+        Logger.debug("[#{__MODULE__}] #{inspect(init_arg)}")
         {session, init_arg} = Keyword.pop!(init_arg, :session)
         {session_id, init_arg} = Keyword.pop!(init_arg, :session_id)
         {session_type, init_arg} = Keyword.pop!(init_arg, :session_type)
@@ -25,8 +26,6 @@ defmodule Nitory.Plugin do
         {middleware, init_arg} = Keyword.pop!(init_arg, :middleware)
         {robot, init_arg} = Keyword.pop!(init_arg, :robot)
         extra_args = capture_extra_args(init_arg)
-
-        Logger.debug("[#{__MODULE__}] #{inspect(init_arg)}")
 
         {:ok,
          Map.merge(extra_args, %{
