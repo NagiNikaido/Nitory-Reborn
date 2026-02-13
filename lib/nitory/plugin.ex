@@ -10,7 +10,7 @@ defmodule Nitory.Plugin do
 
       def start_link(arg) do
         {name, init_arg} = Keyword.pop(arg, :name, nil)
-        Logger.debuf("[#{__MODULE__}] #{name: inspect(name)}")
+        Logger.debug("[#{__MODULE__}] name: #{inspect(name)}")
         GenServer.start_link(__MODULE__, init_arg, name: name)
       end
 
