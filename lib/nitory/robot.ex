@@ -32,7 +32,11 @@ defmodule Nitory.Robot do
           end
 
         name = apply(plugin_module, :plugin_name, [])
-        location = {:via, Registry, {Nitory.SessionSlot, "#{session_prefix}:robot:#{name}"}}
+        uuid = Ecto.UUID.bingenerate()
+
+        location =
+          {:via, Registry, {Nitory.SessionSlot, "#{session_prefix}:robot:#{name}:#{uuid}"}}
+
         {plugin_module, config, location}
       end)
 
@@ -158,12 +162,11 @@ defmodule Nitory.Robot do
     end)
 
     cmds =
-      Enum.reduce(plugins, [], fn {_, _, loc}, acc ->
+      Enum.flat_map(plugins, fn {_, _, loc} ->
         GenServer.call(loc, {:deferred_init})
 
-        acc ++
-          (GenServer.call(loc, {:list_commands})
-           |> Enum.map(fn cmd -> {loc, cmd} end))
+        GenServer.call(loc, {:list_commands})
+        |> Enum.map(fn cmd -> {loc, cmd} end)
       end)
 
     {:noreply, %{state | commands: cmds}}
