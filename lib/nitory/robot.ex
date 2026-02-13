@@ -32,26 +32,31 @@ defmodule Nitory.Robot do
           end
 
         name = apply(plugin_module, :plugin_name, [])
-        uuid = Ecto.UUID.bingenerate()
+        uuid = Ecto.UUID.generate()
 
         location =
-          {:via, Registry, {Nitory.SessionSlot, "#{session_prefix}:robot:#{name}:#{uuid}"}}
+          {:via, Registry, {Nitory.SessionSlot, "#{session_prefix}:robot:#{uuid}"}}
 
-        {plugin_module, config, location}
+        {plugin_module, config, location, uuid}
       end)
 
     children =
-      Enum.map(plugins, fn {plugin_module, config, location} ->
-        {plugin_module,
-         [
-           {:name, location},
-           {:session, session},
-           {:session_type, session_type},
-           {:session_id, session_id},
-           {:session_prefix, session_prefix},
-           {:middleware, middleware},
-           {:robot, robot} | config
-         ]}
+      Enum.map(plugins, fn {plugin_module, config, location, uuid} ->
+        IO.inspect(location)
+
+        Supervisor.child_spec(
+          {plugin_module,
+           [
+             {:name, location},
+             {:session, session},
+             {:session_type, session_type},
+             {:session_id, session_id},
+             {:session_prefix, session_prefix},
+             {:middleware, middleware},
+             {:robot, robot} | config
+           ]},
+          id: {plugin_module, uuid}
+        )
       end)
 
     {:ok, robot_sv} =
@@ -162,7 +167,7 @@ defmodule Nitory.Robot do
     end)
 
     cmds =
-      Enum.flat_map(plugins, fn {_, _, loc} ->
+      Enum.flat_map(plugins, fn {_, _, loc, _} ->
         GenServer.call(loc, {:deferred_init})
 
         GenServer.call(loc, {:list_commands})
