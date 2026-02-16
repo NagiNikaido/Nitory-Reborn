@@ -155,8 +155,9 @@ defmodule Nitory.Plugins.Khst do
   def save_remote_and_add_picture(url, keyword, group_id, path_prefix, message_id) do
     Nitory.Repo.transact(fn ->
       with {:ok, content, hash_sum, ext} <- get_remote(url),
-           path = Path.join(path_prefix, "#{hash_sum}.#{ext}"),
-           {:ok, {first_met, count}} <- add_picture(keyword, group_id, hash_sum, path),
+           rel_path = "#{hash_sum}.#{ext}",
+           path = Path.join(path_prefix, rel_path),
+           {:ok, {first_met, count}} <- add_picture(keyword, group_id, hash_sum, rel_path),
            {:ok, _} <- add_history(message_id, keyword, group_id, hash_sum),
            :ok <- if(first_met, do: save_picture(path, content), else: :ok) do
         {:ok, "* 已添加图片 #{keyword}#{count}"}
@@ -166,12 +167,12 @@ defmodule Nitory.Plugins.Khst do
     end)
   end
 
-  def pick_responding_picture(keyword, group_id) do
+  def pick_responding_picture(keyword, path_prefix, group_id) do
     res =
       Nitory.Repo.transact(fn ->
         with {:ok, pics} <- get_pictures_by_keyword(keyword, group_id),
              pic = List.first(Enum.take_random(pics, 1)),
-             uri = URI.merge("file://", pic.path),
+             uri = URI.merge("file://", Path.join(path_prefix, pic.path)),
              msg = [Nitory.Message.Segment.Image.new!(%{data: %{file: to_string(uri)}})],
              {:ok, data} =
                GenServer.call(
@@ -219,13 +220,14 @@ defmodule Nitory.Plugins.Khst do
   @impl true
   def capture_extra_args(opts) do
     path_prefix = Keyword.get(opts, :path_prefix, ".")
+    File.mkdir_p!(path_prefix)
     %{recv_dispose_handle: nil, path_prefix: path_prefix}
   end
 
   @impl true
-  def handle_call({:capture_keyword_and_respond, msg, keyword, _raw_tags}, _from, state) do
+  def handle_call({:capture_keyword_and_respond, _msg, keyword, _raw_tags}, _from, state) do
     # Here it's guarenteed that the incoming message is a group and text-only message.
-    resp = pick_responding_picture(keyword, state.session_id)
+    resp = pick_responding_picture(keyword, state.path_prefix, state.session_id)
     {:reply, resp, state}
   end
 

@@ -43,14 +43,20 @@ if config_env() == :prod do
       For example: /etc/nitory/
       """
 
-  database_path =
-    Path.join(base_path, System.get_env("DATABASE_PATH") || "nitory-reborn.db")
+  File.mkdir_p!(base_path)
 
-  khst_path =
-    Path.join(base_path, System.get_env("KHST_PATH") || "./")
+  {:ok, rel_database_path} =
+    Path.safe_relative(System.get_env("DATABASE_PATH") || "nitory-reborn.db", base_path)
 
-  log_path =
-    Path.join(base_path, System.get_env("LOG_PATH") || "log.txt")
+  {:ok, rel_khst_path} =
+    Path.safe_relative(System.get_env("KHST_PATH") || "./")
+
+  {:ok, rel_log_path} =
+    Path.safe_relative(System.get_env("LOG_PATH") || "log.txt")
+
+  database_path = Path.join(base_path, rel_database_path)
+  khst_path = Path.join(base_path, rel_khst_path)
+  log_path = Path.join(base_path, rel_log_path)
 
   config :nitory, Nitory.Robot,
     plugins: [
