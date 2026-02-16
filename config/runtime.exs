@@ -36,26 +36,21 @@ if config_env() != :prod do
 end
 
 if config_env() == :prod do
-  database_path =
-    System.get_env("DATABASE_PATH") ||
+  base_path =
+    System.get_env("BASE_PATH") ||
       raise """
-      environment variable DATABASE_PATH is missing.
-      For example: /etc/nitory/nitory.db
+      environment variable BASE_PATH is missing.
+      For example: /etc/nitory/
       """
+
+  database_path =
+    Path.join(base_path, System.get_env("DATABASE_PATH") || "nitory-reborn.db")
 
   khst_path =
-    System.get_env("KHST_PATH") ||
-      raise """
-      environment variable KHST_PATH is missing.
-      For example: /etc/nitory/pic
-      """
+    Path.join(base_path, System.get_env("KHST_PATH") || "./")
 
   log_path =
-    System.get_env("LOG_PATH") ||
-      raise """
-      environment variable LOG_PATH is missing.
-      For example: /etc/nitory/log.txt
-      """
+    Path.join(base_path, System.get_env("LOG_PATH") || "log.txt")
 
   config :nitory, Nitory.Robot,
     plugins: [
