@@ -49,7 +49,7 @@ if config_env() == :prod do
     Path.safe_relative(System.get_env("DATABASE_PATH") || "nitory-reborn.db", base_path)
 
   {:ok, rel_khst_path} =
-    Path.safe_relative(System.get_env("KHST_PATH") || "./")
+    Path.safe_relative(System.get_env("KHST_PATH") || "pics/")
 
   {:ok, rel_log_path} =
     Path.safe_relative(System.get_env("LOG_PATH") || "log.txt")
