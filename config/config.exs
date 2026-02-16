@@ -31,6 +31,8 @@ config :nitory, NitoryWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :nitory, Nitory.Mailer, adapter: Swoosh.Adapters.Local
 
+config :nitory, env: config_env()
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

@@ -2,6 +2,7 @@ defmodule Nitory.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @moduledoc false
+  require Config
 
   use Application
 
@@ -11,8 +12,7 @@ defmodule Nitory.Application do
       NitoryWeb.Telemetry,
       Nitory.Repo,
       {Ecto.Migrator,
-        repos: Application.fetch_env!(:nitory, :ecto_repos),
-        skip: skip_migrations?()},
+       repos: Application.fetch_env!(:nitory, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:nitory, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Nitory.PubSub},
       # Start the Finch HTTP client for sending emails
@@ -25,6 +25,11 @@ defmodule Nitory.Application do
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
+
+    if Application.get_env(:nitory, :env) == :prod do
+      Logger.add_handlers(:nitory)
+    end
+
     opts = [strategy: :one_for_one, name: Nitory.Supervisor]
     Supervisor.start_link(children, opts)
   end

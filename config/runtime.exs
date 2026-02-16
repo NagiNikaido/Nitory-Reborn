@@ -46,8 +46,15 @@ if config_env() == :prod do
   khst_path =
     System.get_env("KHST_PATH") ||
       raise """
-      environment variable DATABASE_PATH is missing.
+      environment variable KHST_PATH is missing.
       For example: /etc/nitory/pic
+      """
+
+  log_path =
+    System.get_env("LOG_PATH") ||
+      raise """
+      environment variable LOG_PATH is missing.
+      For example: /etc/nitory/log.txt
       """
 
   config :nitory, Nitory.Robot,
@@ -58,6 +65,21 @@ if config_env() == :prod do
       {Nitory.Plugins.Dice, cmd_face: "w", default_dice: "1d10a8e10"},
       {Nitory.Plugins.Khst, path_prefix: khst_path}
     ]
+
+  config :nitory, :logger, [
+    {:handler, :file_log, :logger_std_h,
+     %{
+       config: %{
+         file: log_path,
+         filesync_repeat_interval: 5000,
+         file_check: 5000,
+         max_no_bytes: 10_000_000,
+         max_no_files: 5,
+         compress_on_rotate: true
+       },
+       formatter: Logger.Formatter.new()
+     }}
+  ]
 
   config :nitory, Nitory.Repo,
     database: database_path,
