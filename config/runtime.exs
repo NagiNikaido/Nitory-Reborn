@@ -78,7 +78,12 @@ if config_env() == :prod do
          max_no_files: 5,
          compress_on_rotate: true
        },
-       formatter: Logger.Formatter.new(colors: [enabled: false])
+       formatter:
+         Logger.Formatter.new(
+           colors: [enabled: false],
+           format: "$date $time $metadata [$level] $message\n",
+           metadata: [:mfa]
+         )
      }}
   ]
 
