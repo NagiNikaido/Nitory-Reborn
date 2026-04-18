@@ -138,8 +138,10 @@ defmodule Nitory.Robot do
     Nitory.Middleware.register(middleware, fn msg, next ->
       [reply, at | message] = split_reply(msg.message)
 
+      # to avoid "." as the input text
       if length(message) == 1 and List.first(message).type == :text and
-           String.starts_with?(List.first(message).data.text, ".") do
+           String.starts_with?(List.first(message).data.text, ".") and
+           String.length(List.first(message).data.text) > 1 do
         raw_args = List.first(message).data.text |> String.slice(1..-1//1) |> String.split()
 
         res =
