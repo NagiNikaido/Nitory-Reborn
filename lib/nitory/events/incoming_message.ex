@@ -86,6 +86,7 @@ defmodule Nitory.Events.IncomingMessage do
 
   @type t :: GroupMessage.t() | PrivateMessage.t()
 
+  @doc false
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}

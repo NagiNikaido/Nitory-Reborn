@@ -13,6 +13,7 @@ defmodule Nitory.Event do
 
   @type t :: MetaEvent.t() | IncomingMessage.t() | Notice.t() | Request.t() | Echo.t()
 
+  @doc false
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
@@ -33,8 +34,10 @@ defmodule Nitory.Event do
 
   def cast(t), do: {:error, "Unsupported event: #{inspect(t)}"}
 
+  @doc false
   def dump(_), do: :error
 
+  @doc false
   def load(_), do: :error
 end
 

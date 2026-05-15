@@ -225,6 +225,7 @@ defmodule Nitory.Events.Notice do
           | FriendAdd.t()
           | FriendRecall.t()
 
+  @doc false
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}

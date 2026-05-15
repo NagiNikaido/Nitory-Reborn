@@ -61,6 +61,7 @@ defmodule Nitory.Events.MetaEvent do
 
   @type t :: Heartbeat.t() | Lifecycle.t()
 
+  @doc false
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
@@ -72,7 +73,9 @@ defmodule Nitory.Events.MetaEvent do
 
   def cast(t), do: {:error, "Unsupported meta event: #{inspect(t)}"}
 
+  @doc false
   def dump(_), do: :error
 
+  @doc false
   def load(_), do: :error
 end

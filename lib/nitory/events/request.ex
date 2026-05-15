@@ -60,6 +60,7 @@ defmodule Nitory.Events.Request do
 
   @type t :: FriendRequest.t() | GroupRequest.t()
 
+  @doc false
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
@@ -71,7 +72,9 @@ defmodule Nitory.Events.Request do
 
   def cast(t), do: {:error, "Unsupported request event: #{inspect(t)}"}
 
+  @doc false
   def dump(_), do: :error
 
+  @doc false
   def load(_), do: :error
 end
