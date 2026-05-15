@@ -41,34 +41,7 @@ defmodule Nitory.ApiHandlerTest do
           GenServer.call(Nitory.ApiHandler, input)
         end)
 
-      echo =
-        receive do
-          {:api_request,
-           %{
-             action: :send_group_msg,
-             params: %Nitory.ApiHandler.SendGroupMsg.InputSpec{
-               group_id: ^id,
-               message: ^message
-             },
-             echo: echo
-           }} ->
-            {:send_group_msg, echo}
-
-          {:api_request,
-           %{
-             action: :send_private_msg,
-             params: %Nitory.ApiHandler.SendPrivateMsg.InputSpec{
-               user_id: ^id,
-               message: ^message
-             },
-             echo: echo
-           }} ->
-            {:send_private_msg, echo}
-
-          data = _ ->
-            flunk("Received:\n#{inspect(data, pretty: true)}")
-            nil
-        end
+      echo = await_api_request(action, id, message)
 
       assert {^action, _} = echo
 
@@ -87,6 +60,41 @@ defmodule Nitory.ApiHandlerTest do
       )
 
       assert Task.await(task) == {:ok, output}
+    end
+  end
+
+  defp await_api_request(action, id, message) do
+    receive do
+      {:api_request,
+       %{
+         action: :send_group_msg,
+         params: %Nitory.ApiHandler.SendGroupMsg.InputSpec{
+           group_id: ^id,
+           message: ^message
+         },
+         echo: echo
+       }} ->
+        {:send_group_msg, echo}
+
+      {:api_request,
+       %{
+         action: :send_private_msg,
+         params: %Nitory.ApiHandler.SendPrivateMsg.InputSpec{
+           user_id: ^id,
+           message: ^message
+         },
+         echo: echo
+       }} ->
+        {:send_private_msg, echo}
+
+      {:api_request, _unexpected} ->
+        await_api_request(action, id, message)
+
+      other ->
+        flunk("Unexpected message: #{inspect(other)}")
+    after
+      5_000 ->
+        flunk("Timeout waiting for api_request (action=#{action}, id=#{id})")
     end
   end
 end
