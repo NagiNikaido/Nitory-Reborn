@@ -1,4 +1,13 @@
 defmodule Nitory.Plugins.Nick do
+  @moduledoc """
+  Nickname plugin for per-group custom display names.
+
+  `.nn <name>` — sets the user's nickname for the current group.
+  `.nn` — resets to the default QQ nickname.
+
+  Nicknames are persisted via `Nitory.Nickname` Ecto schema.
+  """
+
   require Logger
   use Nitory.Plugin
 

@@ -1,7 +1,30 @@
 defmodule Nitory.Command do
+  @moduledoc """
+  Command definition and parsing.
+
+  Commands are defined with a display name, a cmd_face (literal string or
+  regex with named captures), optional arguments with predicates, and an
+  action (function or MFA tuple). `parse/3` matches raw input text against
+  the cmd_face and extracts captured groups and optional arguments.
+
+  ## Options
+
+  Each command option has a `name`, an optional `predicator` function
+  for validation, and an `optional` flag. The special atom `:rest`
+  captures all remaining arguments.
+  """
+
   require Logger
 
   defmodule Option do
+    @moduledoc """
+    Command option descriptor.
+
+    - `name` — atom used as key in parsed results
+    - `predicator` — validation function `(String.t() -> boolean())`, or nil for pass-through
+    - `optional` — if true, the option is skipped when no argument remains
+    """
+
     @type t :: %__MODULE__{
             name: atom(),
             predicator: (String.t() -> boolean()) | nil,

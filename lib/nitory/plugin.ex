@@ -1,4 +1,13 @@
 defmodule Nitory.Plugin do
+  @moduledoc """
+  Plugin behaviour and `__using__` macro.
+
+  Each plugin is a GenServer started under `Nitory.Robot`'s supervision
+  tree.  Plugins define commands via `Nitory.Command` and react to
+  messages through their `handle_call/3` and `handle_cast/2` callbacks.
+  Use `use Nitory.Plugin` to get the standard GenServer boilerplate.
+  """
+
   defmacro __using__(_opt) do
     quote location: :keep do
       use GenServer

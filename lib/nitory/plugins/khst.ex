@@ -1,4 +1,17 @@
 defmodule Nitory.Plugins.Khst do
+  @moduledoc """
+  Keyword-to-picture ("看话说图") plugin.
+
+  Associates keywords with images in group chats.  Users can:
+  - add pictures by replying to an image with a keyword
+  - retrieve a picture by sending its keyword
+  - tag pictures with `+tag`/`-tag` for filtering
+  - delete associations by replying with `.del`
+
+  Stores picture metadata and keyword mappings in SQLite via
+  `Nitory.Repo`.  Pictures are saved to the local filesystem.
+  """
+
   use Nitory.Plugin
   import Ecto.Query, only: [from: 2]
 

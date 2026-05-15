@@ -1,4 +1,14 @@
 defmodule Nitory.Nickname do
+  @moduledoc """
+  Ecto schema for per-user, per-group nickname persistence.
+
+  Stores a custom display name for a user within a specific group.
+  Provides `get_nick/3`, `set_nick/3`, and `rm_nick/2` for
+  reading, upserting, and deleting nickname records.
+
+  Backed by the `nickname` table in the SQLite3 database.
+  """
+
   use Ecto.Schema
 
   schema "nickname" do

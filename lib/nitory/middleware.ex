@@ -1,4 +1,20 @@
 defmodule Nitory.Middleware do
+  @moduledoc """
+  Composable middleware chain for message processing.
+
+  Middleware functions are called in registration order. Each middleware
+  receives a context and the tail of the chain; it may short-circuit by
+  not calling the next function. Supports anonymous functions, MFA tuples,
+  and GenServer-backed middleware (e.g. for stateful processing).
+
+  ## Registration
+
+      Nitory.Middleware.register(mw, fn ctx, next -> Nitory.Middleware.run(ctx, next) end)
+      Nitory.Middleware.register(mw, SomeModule, :handler, [arg1, arg2], :prepend)
+
+  Registration returns a dispose function to remove the middleware.
+  """
+
   use GenServer
 
   # a sample middleware

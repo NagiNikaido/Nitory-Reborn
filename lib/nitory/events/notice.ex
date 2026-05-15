@@ -1,4 +1,11 @@
 defmodule Nitory.Events.Notice.Types do
+  @moduledoc """
+  OneBot notice type enum.
+
+  Values: `:group_admin`, `:group_ban`, `:group_decrease`, `:group_increase`,
+  `:group_recall`, `:group_upload`, `:friend_add`, `:friend_recall`.
+  """
+
   use Flint.Type,
     extends: Ecto.Enum,
     values: [
@@ -14,6 +21,12 @@ defmodule Nitory.Events.Notice.Types do
 end
 
 defmodule Nitory.Events.Notice.GroupUpload do
+  @moduledoc """
+  OneBot group file upload notice schema.
+
+  Fires when a file is uploaded to a group, carrying the uploader and file metadata.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -34,6 +47,12 @@ defmodule Nitory.Events.Notice.GroupUpload do
 end
 
 defmodule Nitory.Events.Notice.GroupAdmin do
+  @moduledoc """
+  OneBot group admin change notice schema.
+
+  Fires when a member is promoted or demoted (`:set` / `:unset`).
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -48,6 +67,13 @@ defmodule Nitory.Events.Notice.GroupAdmin do
 end
 
 defmodule Nitory.Events.Notice.GroupDecrease do
+  @moduledoc """
+  OneBot group member decrease notice schema.
+
+  Fires when a member leaves or is removed from a group.
+  Sub-type is one of: `:leave`, `:kick`, `:kick_me`, `:disband`.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -63,6 +89,12 @@ defmodule Nitory.Events.Notice.GroupDecrease do
 end
 
 defmodule Nitory.Events.Notice.GroupIncrease do
+  @moduledoc """
+  OneBot group member increase notice schema.
+
+  Fires when a new member joins (`:approve`) or is invited (`:invite`).
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -78,6 +110,13 @@ defmodule Nitory.Events.Notice.GroupIncrease do
 end
 
 defmodule Nitory.Events.Notice.GroupBan do
+  @moduledoc """
+  OneBot group ban/mute notice schema.
+
+  Fires when a member is banned/muted (`:ban`) or unblocked (`:lift_ban`).
+  Includes the ban duration in seconds.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -94,6 +133,13 @@ defmodule Nitory.Events.Notice.GroupBan do
 end
 
 defmodule Nitory.Events.Notice.GroupRecall do
+  @moduledoc """
+  OneBot group message recall notice schema.
+
+  Fires when a message is recalled (deleted) from a group, identifying
+  the original sender, operator, and message ID.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -109,6 +155,12 @@ defmodule Nitory.Events.Notice.GroupRecall do
 end
 
 defmodule Nitory.Events.Notice.FriendAdd do
+  @moduledoc """
+  OneBot friend added notice schema.
+
+  Fires when a new friend is successfully added.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -121,6 +173,12 @@ defmodule Nitory.Events.Notice.FriendAdd do
 end
 
 defmodule Nitory.Events.Notice.FriendRecall do
+  @moduledoc """
+  OneBot friend message recall notice schema.
+
+  Fires when a message is recalled in a private conversation.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -134,6 +192,14 @@ defmodule Nitory.Events.Notice.FriendRecall do
 end
 
 defmodule Nitory.Events.Notice do
+  @moduledoc """
+  Union type for OneBot notice events.
+
+  Dispatches `cast/1` to the relevant notice sub-type based on the
+  `notice_type` field. Some notice types (poke, lucky_king, honor, etc.)
+  are not yet implemented.
+  """
+
   use Ecto.Type
 
   alias Nitory.Events.Notice.{

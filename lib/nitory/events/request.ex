@@ -1,8 +1,17 @@
 defmodule Nitory.Events.Request.Types do
+  @moduledoc "OneBot request type enum: `:friend` or `:group`."
+
   use Flint.Type, extends: Ecto.Enum, values: [:friend, :group]
 end
 
 defmodule Nitory.Events.Request.FriendRequest do
+  @moduledoc """
+  OneBot friend request event schema.
+
+  Represents an incoming friend invitation, including the requesting user's ID,
+  a comment message, and a flag token used for approval.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -17,6 +26,12 @@ defmodule Nitory.Events.Request.FriendRequest do
 end
 
 defmodule Nitory.Events.Request.GroupRequest do
+  @moduledoc """
+  OneBot group request event schema.
+
+  Represents a group join request or invitation, with a sub-type of `:add` or `:invite`.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -32,6 +47,13 @@ defmodule Nitory.Events.Request.GroupRequest do
 end
 
 defmodule Nitory.Events.Request do
+  @moduledoc """
+  Union type for OneBot request events.
+
+  Dispatches `cast/1` to `FriendRequest` or `GroupRequest` based on the
+  `request_type` field.
+  """
+
   use Ecto.Type
 
   alias Nitory.Events.Request.{FriendRequest, GroupRequest}

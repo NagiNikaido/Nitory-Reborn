@@ -1,4 +1,17 @@
 defmodule Nitory.Robot do
+  @moduledoc """
+  Per-chat robot instance managing plugins and command dispatch.
+
+  Supervised by `Nitory.Session`, one Robot runs per group or private chat.
+  On startup it:
+
+  1. Reads configured plugins from application env
+  2. Starts each plugin under a plugin supervisor
+  3. Registers a middleware that intercepts dot-prefixed text messages,
+     parses them as `Nitory.Command` instances, and dispatches to the
+     appropriate plugin
+  """
+
   use GenServer
   alias Phoenix.PubSub
 

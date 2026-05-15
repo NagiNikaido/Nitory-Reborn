@@ -1,4 +1,12 @@
 defmodule NitoryWeb.Router do
+  @moduledoc """
+  Phoenix router for the Nitory application.
+
+  Provides a JSON API pipeline at `/api`, a development mailbox
+  preview at `/dev/mailbox`, and the LiveDashboard at `/dashboard`
+  (protected by HTTP basic auth in production).
+  """
+
   use NitoryWeb, :router
 
   pipeline :api do

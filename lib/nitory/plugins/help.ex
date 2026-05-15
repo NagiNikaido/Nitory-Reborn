@@ -1,4 +1,13 @@
 defmodule Nitory.Plugins.Help do
+  @moduledoc """
+  Help plugin providing command listing and usage information.
+
+  `.help` — lists all visible commands with short descriptions.
+  `.help <name>` — shows the full usage string for a specific command.
+  Also prints a bot banner with version and startup time read from
+  application config.
+  """
+
   use Nitory.Plugin
 
   @impl true

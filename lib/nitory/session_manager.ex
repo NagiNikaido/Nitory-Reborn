@@ -1,4 +1,12 @@
 defmodule Nitory.SessionManager do
+  @moduledoc """
+  Session lifecycle manager for the OneBot protocol.
+
+  Receives parsed events via PubSub and dispatches them to the appropriate
+  `Nitory.Session`. Creates new sessions on first contact with a group or
+  user. Also monitors OneBot heartbeat liveness.
+  """
+
   use GenServer
   alias Phoenix.PubSub
 

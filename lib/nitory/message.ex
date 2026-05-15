@@ -1,8 +1,16 @@
 defmodule Nitory.Message.Segment.Types do
+  @moduledoc "OneBot message segment type enum: `:text`, `:image`, `:reply`, `:at`."
+
   use Flint.Type, extends: Ecto.Enum, values: [:text, :image, :reply, :at]
 end
 
 defmodule Nitory.Message.Segment.Text do
+  @moduledoc """
+  OneBot text message segment schema.
+
+  Contains a single `data.text` field with the plain text content.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -15,6 +23,13 @@ defmodule Nitory.Message.Segment.Text do
 end
 
 defmodule Nitory.Message.Segment.Image do
+  @moduledoc """
+  OneBot image message segment schema.
+
+  Contains image metadata: local file path, thumbnail, remote URL,
+  summary (for accessibility), and sub-type (`:normal` or `:custom`).
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -31,6 +46,13 @@ defmodule Nitory.Message.Segment.Image do
 end
 
 defmodule Nitory.Message.Segment.At do
+  @moduledoc """
+  OneBot at-mention message segment schema.
+
+  Represents an @mention targeting a QQ user. The `qq` field accepts
+  either a string (e.g. `"all"`) or an integer user ID.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -44,6 +66,13 @@ defmodule Nitory.Message.Segment.At do
 end
 
 defmodule Nitory.Message.Segment.Reply do
+  @moduledoc """
+  OneBot reply message segment schema.
+
+  Represents a reply to a previous message, identified by the original
+  message's `data.id`.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -56,6 +85,14 @@ defmodule Nitory.Message.Segment.Reply do
 end
 
 defmodule Nitory.Message.Segment do
+  @moduledoc """
+  Union type for OneBot message segments.
+
+  A message is composed of an array of segments. This module dispatches
+  `cast/1` to `Text`, `Image`, `At`, or `Reply` based on the `type` field,
+  and `dump/1` serializes back via `Nitory.Helper.LeafSchema.dump/1`.
+  """
+
   use Ecto.Type
   alias Nitory.Message.Segment.{Text, Image, At, Reply}
 
@@ -84,6 +121,14 @@ defmodule Nitory.Message.Segment do
 end
 
 defmodule Nitory.Message do
+  @moduledoc """
+  OneBot message type (string or segment array).
+
+  A message can be a raw string or a list of `Nitory.Message.Segment`
+  structs. `cast/1` accepts either form; `dump/1` normalizes segments
+  through their respective `dump` functions.
+  """
+
   use Ecto.Type
   alias Nitory.Message.Segment
 
