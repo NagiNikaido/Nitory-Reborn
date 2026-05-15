@@ -14,6 +14,16 @@ defmodule Nitory.Plugins.Dice.AST do
               opt: nil,
               extra: nil
 
+    @doc """
+    Creates a new `DiceAST` struct.
+
+    `k_or_m` is a keyword list or map with keys `:cnt`, `:face`, `:opt`,
+    and `:extra`.  When `default_dice` is provided, missing fields are
+    filled from it and adjusted for legality (e.g. `cnt` is raised to
+    satisfy `:high`/`:low` constraints).
+
+    Returns `{:ok, dice}` or `{:error, reason}`.
+    """
     @spec new(map() | keyword(), __MODULE__.t() | nil) ::
             {:ok, __MODULE__.t()} | {:error, String.t()}
     def new(k_or_m, default_dice \\ nil)
@@ -79,6 +89,10 @@ defmodule Nitory.Plugins.Dice.AST do
       end
     end
 
+    @doc """
+    Returns true if all required fields are present and constraints
+    (e.g. keep count vs face) are satisfied.
+    """
     @spec legal?(__MODULE__.t()) :: boolean()
     def legal?(dice) do
       if dice.cnt == nil or dice.face == nil do
@@ -105,6 +119,11 @@ defmodule Nitory.Plugins.Dice.AST do
       end
     end
 
+    @doc """
+    Serializes a `DiceAST` struct back to its canonical string form,
+    e.g. `%DiceAST{cnt: 3, face: 6}` → `"3d6"`,
+    `%DiceAST{cnt: 6, face: 20, opt: {:high, 1}}` → `"6d20h1"`.
+    """
     @spec to_string(__MODULE__.t()) :: String.t()
     def to_string(dice) do
       "#{dice.cnt}d#{dice.face}" <>
@@ -203,6 +222,10 @@ defmodule Nitory.Plugins.Dice.AST do
       end
     end
 
+    @doc """
+    Parses a dice notation string (e.g. `"3d6"`, `"6d20b5e1"`) into a
+    `DiceAST` struct.  Returns `{:ok, dice}` or `{:error, reason}`.
+    """
     @spec parse(binary()) :: {:ok, __MODULE__.t()} | {:error, term()}
     def parse(input) when is_binary(input) do
       %Ergo.Context{status: status, ast: ast} = Ergo.parse(Parser.just_dice(), input)
@@ -213,6 +236,10 @@ defmodule Nitory.Plugins.Dice.AST do
       end
     end
 
+    @doc """
+    Like `parse/1`, but returns the struct directly or raises
+    `ArgumentError`.
+    """
     @spec parse!(binary()) :: __MODULE__.t()
     def parse!(input) when is_binary(input) do
       case parse(input) do
@@ -344,6 +371,14 @@ defmodule Nitory.Plugins.Dice.AST do
       end
     end
 
+    @doc """
+    Parses a full dice expression (arithmetic of one or more `DiceAST`
+    units with optional repeat count, e.g. `"3#2d20h1+5"`).
+
+    `default_dice` is used when the expression omits a dice face or count.
+
+    Returns `{:ok, ast}` or `{:error, reason}`.
+    """
     @spec parse(binary(), DiceAST.t() | nil) :: {:ok, dice_full_expr()} | {:error, term()}
     def parse(input, default_dice \\ nil)
 
@@ -357,6 +392,10 @@ defmodule Nitory.Plugins.Dice.AST do
       end
     end
 
+    @doc """
+    Like `parse/2`, but returns the AST directly or raises
+    `ArgumentError`.
+    """
     @spec parse!(binary(), DiceAST.t() | nil) :: dice_full_expr()
     def parse!(input, default_dice \\ nil) do
       case parse(input, default_dice) do
@@ -536,6 +575,11 @@ defmodule Nitory.Plugins.Dice.AST do
     "l",
     "e"
   ]
+
+  @doc """
+  Returns true if `maybe_expr` starts with a character that could begin
+  a dice expression (digit, `+`, `-`, `(`, `d`, `a`, `b`, `h`, `l`, `e`).
+  """
   def dice_expr_leading?(maybe_expr) do
     String.starts_with?(maybe_expr, @dice_expr_leading)
   end

@@ -48,7 +48,14 @@ defmodule Nitory.Plugins.Khst do
     end
   end
 
+  @doc """
+  Returns true if `maybe_keyword` does not start with `.` or `/`.
+  """
   def proper_keyword?(maybe_keyword), do: not String.starts_with?(maybe_keyword, [".", "/"])
+
+  @doc """
+  Returns true if `maybe_tags` matches the pattern `[+-]tag...`.
+  """
   def proper_tags?(maybe_tags), do: maybe_tags =~ ~r/^([+\-].+)*$/
 
   def split_msg(msg) do
@@ -165,6 +172,12 @@ defmodule Nitory.Plugins.Khst do
     end
   end
 
+  @doc """
+  Downloads an image from `url`, saves it locally, and associates it with
+  `keyword` in `group_id`.
+
+  Records the mapping in the database and creates a history entry.
+  """
   def save_remote_and_add_picture(url, keyword, group_id, path_prefix, message_id) do
     Nitory.Repo.transact(fn ->
       with {:ok, content, hash_sum, ext} <- get_remote(url),
@@ -180,6 +193,12 @@ defmodule Nitory.Plugins.Khst do
     end)
   end
 
+  @doc """
+  Picks a random picture associated with `keyword` in `group_id` and
+  sends it as a group message.
+
+  Pictures are loaded from `path_prefix` on the local filesystem.
+  """
   def pick_responding_picture(keyword, path_prefix, group_id) do
     res =
       Nitory.Repo.transact(fn ->
@@ -205,6 +224,12 @@ defmodule Nitory.Plugins.Khst do
     end
   end
 
+  @doc """
+  Deletes a keyword-to-picture association by tracing the history
+  of a specific message reply.
+
+  `message_id` and `group_id` identify the history entry.
+  """
   def remove_k2p_by_history(message_id, group_id) do
     Nitory.Repo.transact(fn repo ->
       existing_history = repo.get_by(History, message_id: message_id, group_id: group_id)
