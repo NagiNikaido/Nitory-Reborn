@@ -49,6 +49,13 @@ defmodule Nitory.Plugins.Nick do
     {:reply, res, state}
   end
 
+  @doc """
+  Sets or removes a nickname for the message sender.
+
+  If `opts[:nickname]` is nil, resets to the default QQ nickname.
+  Otherwise stores the given nickname.  `opts` must include `:msg`
+  (the incoming message struct) and `:server` (the plugin GenServer).
+  """
   def cmd_set_nick(opts) do
     msg = Keyword.fetch!(opts, :msg)
     nickname = Keyword.get(opts, :nickname)

@@ -54,6 +54,15 @@ defmodule Nitory.Command do
     :msg_type
   ]
 
+  @doc """
+  Creates a new command struct from a keyword list.
+
+  Required keys: `:hidden`, `:cmd_face`, `:action`.
+  Optional: `:display_name`, `:short_usage`, `:usage`, `:options`, `:msg_type`.
+
+  For visible commands all of `:display_name`, `:short_usage`, and `:usage`
+  must be present.  Hidden commands omit display fields.
+  """
   @spec new(keyword()) :: {:ok, t()} | {:error, atom()}
   def new(opt) do
     with {:ok, hidden} <- Keyword.fetch(opt, :hidden),
@@ -97,6 +106,9 @@ defmodule Nitory.Command do
     end
   end
 
+  @doc """
+  Like `new/1`, but raises on failure.
+  """
   @spec new!(keyword()) :: t()
   def new!(opts) do
     case new(opts) do
@@ -105,6 +117,13 @@ defmodule Nitory.Command do
     end
   end
 
+  @doc """
+  Parses raw argument strings against a command definition.
+
+  `opt` is a keyword list that must include `:msg` (the incoming message
+  struct used for message-type gating).  Returns `{:ok, {cmd, parsed_opts}}`
+  or an error tuple.
+  """
   @spec parse(Nitory.Command.t(), [String.t()], [term()]) ::
           {:ok, {Nitory.Command.t(), [term()]}}
           | {:error,

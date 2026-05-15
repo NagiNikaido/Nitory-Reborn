@@ -63,6 +63,10 @@ defmodule Nitory.Plugins.Dice do
     GenServer.call(server, {:roll_dice, expr, default_dice, msg, desc, hidden})
   end
 
+  @doc """
+  Abbreviated roll. Extracts `:dice_cnt` and `:appendix` from `opts`
+  and constructs an expression string before delegating to `roll_dice/1`.
+  """
   def roll_dice_abbr(opts) do
     {dice_cnt, opts} = Keyword.pop(opts, :dice_cnt, "")
     {appendix, opts} = Keyword.pop(opts, :appendix, "")

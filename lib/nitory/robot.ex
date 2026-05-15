@@ -276,12 +276,26 @@ defmodule Nitory.Robot do
     end
   end
 
+  @doc """
+  Returns all commands (including hidden) registered across plugins.
+  """
   def all_commands(pid), do: GenServer.call(pid, {:list_commands, true})
 
+  @doc """
+  Returns only visible (non-hidden) commands from all plugins.
+  """
   def all_visible_commands(pid), do: GenServer.call(pid, {:list_commands, false})
 
+  @doc """
+  Sends a message back to the same chat where a command was received.
+  """
   def reply_to_session(pid, msg), do: GenServer.cast(pid, {:send_to_session, :reply, msg})
 
+  @doc """
+  Sends a message to an arbitrary session (group or private chat).
+
+  `session_ref` is `{session_type, session_id}`, e.g. `{:group, 123}`.
+  """
   def send_to_session(pid, msg, {_session_type, _session_id} = session_ref),
     do: GenServer.cast(pid, {:send_to_session, session_ref, msg})
 end
