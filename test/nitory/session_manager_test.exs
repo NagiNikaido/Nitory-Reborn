@@ -2,6 +2,10 @@ defmodule Nitory.SessionManagerTest do
   use Nitory.DataCase
 
   setup do
+    if pid = Process.whereis(Nitory.ApiSlot) do
+      Process.exit(pid, :normal)
+    end
+
     unless Process.whereis(Nitory.SessionManager) do
       start_link_supervised!(Nitory.SessionManager)
     end
