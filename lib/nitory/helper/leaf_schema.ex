@@ -1,4 +1,13 @@
 defmodule Nitory.Helper.LeafSchema do
+  @moduledoc """
+  Convenience layer over `Flint.Schema` for embedded Ecto schemas.
+
+  Adds `new/2`, `new!/2`, `cast/2`, `load/2`, and `dump/1` functions that
+  delegate to Ecto changeset validation and `embedded_dump`.  Used by all
+  OneBot event schemas and API input/output specs.  The `:json` embedded
+  dump format ensures clean serialization for OneBot communication.
+  """
+
   defmacro __using__(opt) do
     quote do
       use Flint.Schema, unquote(opt)

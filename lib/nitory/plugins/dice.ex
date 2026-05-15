@@ -1,4 +1,17 @@
 defmodule Nitory.Plugins.Dice do
+  @moduledoc """
+  Dice rolling plugin with a rich expression DSL.
+
+  Supports standard dice notation (`3d6`, `2d20h1`, `6d10a8e10`) with:
+  - high/low keep (`h`/`l`)
+  - target thresholds (`a`/`b`)
+  - exploding dice (`e`)
+  - arithmetic expressions combining multiple roll units
+
+  Commands: `.r` (roll), `.rh` (hidden roll via private message).
+  See `Nitory.Plugins.Dice.AST` for the expression parser/evaluator.
+  """
+
   use Nitory.Plugin
   alias Nitory.Plugins.Dice.AST.{DiceAST, DiceExpr}
 
@@ -50,6 +63,10 @@ defmodule Nitory.Plugins.Dice do
     GenServer.call(server, {:roll_dice, expr, default_dice, msg, desc, hidden})
   end
 
+  @doc """
+  Abbreviated roll. Extracts `:dice_cnt` and `:appendix` from `opts`
+  and constructs an expression string before delegating to `roll_dice/1`.
+  """
   def roll_dice_abbr(opts) do
     {dice_cnt, opts} = Keyword.pop(opts, :dice_cnt, "")
     {appendix, opts} = Keyword.pop(opts, :appendix, "")

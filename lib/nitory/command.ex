@@ -1,7 +1,30 @@
 defmodule Nitory.Command do
+  @moduledoc """
+  Command definition and parsing.
+
+  Commands are defined with a display name, a cmd_face (literal string or
+  regex with named captures), optional arguments with predicates, and an
+  action (function or MFA tuple). `parse/3` matches raw input text against
+  the cmd_face and extracts captured groups and optional arguments.
+
+  ## Options
+
+  Each command option has a `name`, an optional `predicator` function
+  for validation, and an `optional` flag. The special atom `:rest`
+  captures all remaining arguments.
+  """
+
   require Logger
 
   defmodule Option do
+    @moduledoc """
+    Command option descriptor.
+
+    - `name` — atom used as key in parsed results
+    - `predicator` — validation function `(String.t() -> boolean())`, or nil for pass-through
+    - `optional` — if true, the option is skipped when no argument remains
+    """
+
     @type t :: %__MODULE__{
             name: atom(),
             predicator: (String.t() -> boolean()) | nil,
@@ -31,6 +54,15 @@ defmodule Nitory.Command do
     :msg_type
   ]
 
+  @doc """
+  Creates a new command struct from a keyword list.
+
+  Required keys: `:hidden`, `:cmd_face`, `:action`.
+  Optional: `:display_name`, `:short_usage`, `:usage`, `:options`, `:msg_type`.
+
+  For visible commands all of `:display_name`, `:short_usage`, and `:usage`
+  must be present.  Hidden commands omit display fields.
+  """
   @spec new(keyword()) :: {:ok, t()} | {:error, atom()}
   def new(opt) do
     with {:ok, hidden} <- Keyword.fetch(opt, :hidden),
@@ -74,6 +106,9 @@ defmodule Nitory.Command do
     end
   end
 
+  @doc """
+  Like `new/1`, but raises on failure.
+  """
   @spec new!(keyword()) :: t()
   def new!(opts) do
     case new(opts) do
@@ -82,6 +117,13 @@ defmodule Nitory.Command do
     end
   end
 
+  @doc """
+  Parses raw argument strings against a command definition.
+
+  `opt` is a keyword list that must include `:msg` (the incoming message
+  struct used for message-type gating).  Returns `{:ok, {cmd, parsed_opts}}`
+  or an error tuple.
+  """
   @spec parse(Nitory.Command.t(), [String.t()], [term()]) ::
           {:ok, {Nitory.Command.t(), [term()]}}
           | {:error,

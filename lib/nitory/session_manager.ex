@@ -1,4 +1,12 @@
 defmodule Nitory.SessionManager do
+  @moduledoc """
+  Session lifecycle manager for the OneBot protocol.
+
+  Receives parsed events via PubSub and dispatches them to the appropriate
+  `Nitory.Session`. Creates new sessions on first contact with a group or
+  user. Also monitors OneBot heartbeat liveness.
+  """
+
   use GenServer
   alias Phoenix.PubSub
 
@@ -101,6 +109,17 @@ defmodule Nitory.SessionManager do
     handle_event(ev_obj, state)
   end
 
+  @impl true
+  def handle_info({:check_heartbeat, interval}, state) do
+    cur_timestamp = DateTime.to_unix(DateTime.utc_now(), :millisecond)
+
+    if cur_timestamp - state.last_timestamp > interval do
+      raise "Heartbeat stopped."
+    end
+
+    {:noreply, state}
+  end
+
   def handle_event(%{post_type: :message} = ev_obj, state) do
     session_meta = extract_session_meta(ev_obj)
     ensure_session_exists(session_meta)
@@ -128,17 +147,6 @@ defmodule Nitory.SessionManager do
 
   def handle_event(ev_obj, state) do
     Logger.warning("[#{__MODULE__}] Unsupported event: #{inspect(ev_obj, pretty: true)}")
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info({:check_heartbeat, interval}, state) do
-    cur_timestamp = DateTime.to_unix(DateTime.utc_now(), :millisecond)
-
-    if cur_timestamp - state.last_timestamp > interval do
-      raise "Heartbeat stopped."
-    end
-
     {:noreply, state}
   end
 end

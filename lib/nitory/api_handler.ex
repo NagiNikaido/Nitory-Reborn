@@ -1,4 +1,18 @@
 defmodule Nitory.ApiHandler do
+  @moduledoc """
+  OneBot API call handler.
+
+  Translates GenServer calls/casts into OneBot API requests sent to the
+  connected client via WebSocket. Uses a monotonically increasing echo
+  serial to match responses to their originating requests.
+
+  ## Defined APIs
+
+  Defines input/output specs for the following OneBot actions:
+  - `send_group_msg` / `send_private_msg` / `send_msg`
+  - `get_image`
+  """
+
   use Nitory.Helper.Api
 
   require Logger

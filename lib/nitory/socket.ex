@@ -1,4 +1,12 @@
 defmodule Nitory.Socket do
+  @moduledoc """
+  Phoenix socket transport implementing the OneBot WebSocket protocol.
+
+  Mounted at `/bot`, this transport receives raw JSON messages from the
+  OneBot-compatible client over WebSocket and broadcasts them internally
+  via PubSub for downstream processing by `Nitory.SessionManager`.
+  """
+
   @behaviour Phoenix.Socket.Transport
 
   require Logger

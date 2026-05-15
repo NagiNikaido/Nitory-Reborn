@@ -1,8 +1,18 @@
 defmodule Nitory.Events.IncomingMessage.Types do
+  @moduledoc "OneBot message type enum: `:group` or `:private`."
+
   use Flint.Type, extends: Ecto.Enum, values: [:group, :private]
 end
 
 defmodule Nitory.Events.IncomingMessage.PrivateMessage do
+  @moduledoc """
+  OneBot private message event schema.
+
+  Represents a direct (one-to-one) message received from a user, including
+  sender metadata, message content, and optional target/temp source fields
+  used for group-temp chat scenarios.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -30,6 +40,13 @@ defmodule Nitory.Events.IncomingMessage.PrivateMessage do
 end
 
 defmodule Nitory.Events.IncomingMessage.GroupMessage do
+  @moduledoc """
+  OneBot group message event schema.
+
+  Represents a message sent in a group chat, with sender role/card metadata
+  and an optional anonymous notice sub-type.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -56,12 +73,20 @@ defmodule Nitory.Events.IncomingMessage.GroupMessage do
 end
 
 defmodule Nitory.Events.IncomingMessage do
+  @moduledoc """
+  Union type for incoming OneBot messages.
+
+  Dispatches `cast/1` to `GroupMessage` or `PrivateMessage` based on
+  the `message_type` field.
+  """
+
   use Ecto.Type
 
   alias Nitory.Events.IncomingMessage.{GroupMessage, PrivateMessage}
 
   @type t :: GroupMessage.t() | PrivateMessage.t()
 
+  @doc false
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}

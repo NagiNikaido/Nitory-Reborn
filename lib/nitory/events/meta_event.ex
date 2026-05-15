@@ -1,8 +1,17 @@
 defmodule Nitory.Events.MetaEvent.Types do
+  @moduledoc "OneBot meta event type enum: `:heartbeat` or `:lifecycle`."
+
   use Flint.Type, extends: Ecto.Enum, values: [:heartbeat, :lifecycle]
 end
 
 defmodule Nitory.Events.MetaEvent.Heartbeat do
+  @moduledoc """
+  OneBot heartbeat event schema.
+
+  Sent periodically by the client to confirm the connection is alive.
+  Includes a status sub-object and an interval hint used for liveness monitoring.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -21,6 +30,12 @@ defmodule Nitory.Events.MetaEvent.Heartbeat do
 end
 
 defmodule Nitory.Events.MetaEvent.Lifecycle do
+  @moduledoc """
+  OneBot lifecycle event schema.
+
+  Indicates the client's connection state: `:enable`, `:disable`, or `:connect`.
+  """
+
   use Nitory.Helper.LeafSchema
 
   embedded_schema do
@@ -33,12 +48,20 @@ defmodule Nitory.Events.MetaEvent.Lifecycle do
 end
 
 defmodule Nitory.Events.MetaEvent do
+  @moduledoc """
+  Union type for OneBot meta events.
+
+  Dispatches `cast/1` to `Heartbeat` or `Lifecycle` based on the
+  `meta_event_type` field.
+  """
+
   use Ecto.Type
 
   alias Nitory.Events.MetaEvent.{Heartbeat, Lifecycle}
 
   @type t :: Heartbeat.t() | Lifecycle.t()
 
+  @doc false
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
@@ -50,7 +73,9 @@ defmodule Nitory.Events.MetaEvent do
 
   def cast(t), do: {:error, "Unsupported meta event: #{inspect(t)}"}
 
+  @doc false
   def dump(_), do: :error
 
+  @doc false
   def load(_), do: :error
 end

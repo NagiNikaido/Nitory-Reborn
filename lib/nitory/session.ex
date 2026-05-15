@@ -1,4 +1,12 @@
 defmodule Nitory.Session do
+  @moduledoc """
+  Per-chat session supervisor.
+
+  Spawned dynamically by `Nitory.SessionManager` for each group or private
+  chat. Supervises a `Nitory.Robot` instance and routes incoming messages
+  to it.
+  """
+
   use GenServer
   alias Phoenix.PubSub
 

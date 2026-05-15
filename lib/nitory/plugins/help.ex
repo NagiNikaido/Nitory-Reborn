@@ -1,4 +1,13 @@
 defmodule Nitory.Plugins.Help do
+  @moduledoc """
+  Help plugin providing command listing and usage information.
+
+  `.help` — lists all visible commands with short descriptions.
+  `.help <name>` — shows the full usage string for a specific command.
+  Also prints a bot banner with version and startup time read from
+  application config.
+  """
+
   use Nitory.Plugin
 
   @impl true
@@ -35,10 +44,20 @@ defmodule Nitory.Plugins.Help do
     end
   end
 
+  @doc """
+  Lists all visible commands with a banner header.
+  """
   def print_help_all(helper), do: GenServer.call(helper, {:help_all})
 
+  @doc """
+  Shows full usage string for a specific command.
+  """
   def print_help_help(helper, name), do: GenServer.call(helper, {:help_help, name})
 
+  @doc """
+  Delegates to `print_help_all/1` or `print_help_help/2` based on
+  whether `:cmd` is present in `opts`.  `opts` must include `:server`.
+  """
   def print_help(opts \\ []) do
     helper = Keyword.fetch!(opts, :server)
     name = Keyword.get(opts, :cmd)

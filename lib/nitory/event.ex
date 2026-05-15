@@ -1,10 +1,19 @@
 defmodule Nitory.Event do
+  @moduledoc """
+  Top-level union type for all OneBot events.
+
+  Dispatches `cast/1` based on the `post_type` field to meta events,
+  messages, notices, or requests. Echo responses are detected by the
+  presence of an `echo` field.
+  """
+
   use Ecto.Type
 
   alias Nitory.Events.{MetaEvent, IncomingMessage, Notice, Request, Echo}
 
   @type t :: MetaEvent.t() | IncomingMessage.t() | Notice.t() | Request.t() | Echo.t()
 
+  @doc false
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
@@ -25,11 +34,20 @@ defmodule Nitory.Event do
 
   def cast(t), do: {:error, "Unsupported event: #{inspect(t)}"}
 
+  @doc false
   def dump(_), do: :error
 
+  @doc false
   def load(_), do: :error
 end
 
 defmodule Nitory.Event.Types do
+  @moduledoc """
+  OneBot post type enum.
+
+  Values: `:meta_event`, `:message`, `:notice`, `:request`, `:echo`.
+  Used as the discriminator in `Nitory.Event.cast/1`.
+  """
+
   use Flint.Type, extends: Ecto.Enum, values: [:meta_event, :message, :notice, :request, :echo]
 end

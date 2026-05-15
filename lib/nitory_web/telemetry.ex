@@ -1,4 +1,12 @@
 defmodule NitoryWeb.Telemetry do
+  @moduledoc """
+  Telemetry supervisor and metric definitions.
+
+  Collects Phoenix endpoint, database query, and VM-level metrics
+  via `Telemetry.Metrics` and exposes them through the LiveDashboard.
+  Polls periodic measurements every 10 seconds.
+  """
+
   use Supervisor
   import Telemetry.Metrics
 

@@ -1,4 +1,13 @@
 defmodule Nitory.Helper.Api do
+  @moduledoc """
+  DSL macros for defining OneBot API action handlers.
+
+  Provides `api/2`, `input_spec/1`, and `output_spec/1` macros that generate
+  compile-time `prepare_request/2` and `prepare_response/2` dispatch clauses
+  along with embedded schema modules for validation. Use via `use Nitory.Helper.Api`
+  in a GenServer module like `Nitory.ApiHandler`.
+  """
+
   defmacro api(handler, do: block) do
     handler_module =
       handler

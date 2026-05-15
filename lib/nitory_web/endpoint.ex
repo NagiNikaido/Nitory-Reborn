@@ -1,4 +1,12 @@
 defmodule NitoryWeb.Endpoint do
+  @moduledoc """
+  Phoenix endpoint for the Nitory application.
+
+  Mounts the OneBot WebSocket transport at `/bot`, serves the
+  LiveDashboard at `/dashboard`, and handles standard Phoenix
+  request pipelines (JSON API, static assets).
+  """
+
   use Phoenix.Endpoint, otp_app: :nitory
 
   # The session will be stored in the cookie and signed,

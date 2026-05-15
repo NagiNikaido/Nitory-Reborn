@@ -3,7 +3,9 @@ defmodule Nitory.ApiHandlerTest do
   use ExUnitProperties
 
   setup do
-    start_link_supervised!(Nitory.ApiHandler)
+    unless Process.whereis(Nitory.ApiHandler) do
+      start_link_supervised!(Nitory.ApiHandler)
+    end
     :ok
   end
 

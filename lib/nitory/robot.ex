@@ -1,4 +1,17 @@
 defmodule Nitory.Robot do
+  @moduledoc """
+  Per-chat robot instance managing plugins and command dispatch.
+
+  Supervised by `Nitory.Session`, one Robot runs per group or private chat.
+  On startup it:
+
+  1. Reads configured plugins from application env
+  2. Starts each plugin under a plugin supervisor
+  3. Registers a middleware that intercepts dot-prefixed text messages,
+     parses them as `Nitory.Command` instances, and dispatches to the
+     appropriate plugin
+  """
+
   use GenServer
   alias Phoenix.PubSub
 
@@ -216,6 +229,13 @@ defmodule Nitory.Robot do
     {:noreply, state}
   end
 
+  @impl true
+  def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
+    # Shouldn't be here, but let's just log it.
+    Logger.warning("[#{__MODULE__}] #{inspect(pid)} down due to #{inspect(reason)}.")
+    {:noreply, state}
+  end
+
   defp handle_answer(answer, state) do
     PubSub.broadcast(
       Nitory.PubSub,
@@ -256,19 +276,26 @@ defmodule Nitory.Robot do
     end
   end
 
-  @impl true
-  def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
-    # Shouldn't be here, but let's just log it.
-    Logger.warning("[#{__MODULE__}] #{inspect(pid)} down due to #{inspect(reason)}.")
-    {:noreply, state}
-  end
-
+  @doc """
+  Returns all commands (including hidden) registered across plugins.
+  """
   def all_commands(pid), do: GenServer.call(pid, {:list_commands, true})
 
+  @doc """
+  Returns only visible (non-hidden) commands from all plugins.
+  """
   def all_visible_commands(pid), do: GenServer.call(pid, {:list_commands, false})
 
+  @doc """
+  Sends a message back to the same chat where a command was received.
+  """
   def reply_to_session(pid, msg), do: GenServer.cast(pid, {:send_to_session, :reply, msg})
 
+  @doc """
+  Sends a message to an arbitrary session (group or private chat).
+
+  `session_ref` is `{session_type, session_id}`, e.g. `{:group, 123}`.
+  """
   def send_to_session(pid, msg, {_session_type, _session_id} = session_ref),
     do: GenServer.cast(pid, {:send_to_session, session_ref, msg})
 end
