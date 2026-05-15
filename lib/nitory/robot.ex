@@ -216,6 +216,13 @@ defmodule Nitory.Robot do
     {:noreply, state}
   end
 
+  @impl true
+  def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
+    # Shouldn't be here, but let's just log it.
+    Logger.warning("[#{__MODULE__}] #{inspect(pid)} down due to #{inspect(reason)}.")
+    {:noreply, state}
+  end
+
   defp handle_answer(answer, state) do
     PubSub.broadcast(
       Nitory.PubSub,
@@ -254,13 +261,6 @@ defmodule Nitory.Robot do
       :ok ->
         nil
     end
-  end
-
-  @impl true
-  def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
-    # Shouldn't be here, but let's just log it.
-    Logger.warning("[#{__MODULE__}] #{inspect(pid)} down due to #{inspect(reason)}.")
-    {:noreply, state}
   end
 
   def all_commands(pid), do: GenServer.call(pid, {:list_commands, true})

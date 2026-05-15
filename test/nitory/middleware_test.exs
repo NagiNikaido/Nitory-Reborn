@@ -54,13 +54,13 @@ defmodule Nitory.MiddlewareTest do
 
     # 1
     dispose_1 =
-      Nitory.Middleware.register(mw, fn ctx, next ->
+      Nitory.Middleware.register(mw, fn _ctx, _next ->
         Logger.info("I'm middleware 1. Everything ends here.")
         :ok
       end)
 
     # 2 1
-    dispose_2 =
+    _dispose_2 =
       Nitory.Middleware.register(
         mw,
         fn ctx, next ->
@@ -82,7 +82,7 @@ defmodule Nitory.MiddlewareTest do
       )
 
     # 3 2 1 4
-    dispose_4 =
+    _dispose_4 =
       Nitory.Middleware.register(mw, fn ctx, next ->
         Logger.info("I'm middleware 4. I'm covered by middleware 1.")
         Logger.info("If I'm seen, middleware 1 has been disposed.")
@@ -100,7 +100,7 @@ defmodule Nitory.MiddlewareTest do
       )
 
     # 5 3 2 1 4 6
-    dispose_6 =
+    _dispose_6 =
       Nitory.Middleware.register(
         mw,
         fn ctx, next ->
