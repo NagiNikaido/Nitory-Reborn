@@ -52,8 +52,8 @@ defmodule Nitory.NicknameTest do
 
     test "set_nick overwrites previous value" do
       check all(
-              user_id <- integer(10_000..19_999),
-              group_id <- integer(10_000..19_999),
+              user_id <- integer(1_000_000..9_999_999),
+              group_id <- integer(1_000_000..9_999_999),
               first <- string(:alphanumeric, min_length: 1),
               second <- string(:alphanumeric, min_length: 1),
               first != second
@@ -66,8 +66,8 @@ defmodule Nitory.NicknameTest do
 
     test "rm_nick falls back to default" do
       check all(
-              user_id <- integer(20_000..29_999),
-              group_id <- integer(20_000..29_999),
+              user_id <- integer(10_000_000..99_999_999),
+              group_id <- integer(10_000_000..99_999_999),
               nick <- string(:alphanumeric, min_length: 1),
               default <- string(:alphanumeric)
             ) do
