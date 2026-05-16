@@ -184,4 +184,14 @@ defmodule Nitory.EventTest do
                Event.cast(%{"post_type" => "meta_event", "meta_event_type" => "unknown"})
     end
   end
+
+  describe "doctests" do
+    doctest Nitory.Events.Echo
+    doctest Nitory.Events.IncomingMessage.PrivateMessage
+    doctest Nitory.Events.IncomingMessage.GroupMessage
+    doctest Nitory.Events.MetaEvent.Heartbeat
+    doctest Nitory.Events.MetaEvent.Lifecycle
+    doctest Nitory.Events.Request.FriendRequest
+    doctest Nitory.Events.Request.GroupRequest
+  end
 end

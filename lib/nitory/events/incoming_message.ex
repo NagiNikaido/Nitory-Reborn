@@ -6,11 +6,55 @@ end
 
 defmodule Nitory.Events.IncomingMessage.PrivateMessage do
   @moduledoc """
-  OneBot private message event schema.
+  OneBot private message event (`post_type: "message", message_type: "private"`).
 
-  Represents a direct (one-to-one) message received from a user, including
-  sender metadata, message content, and optional target/temp source fields
-  used for group-temp chat scenarios.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:message` | yes | Event post type |
+  | `message_type` | `:private` | yes | Message type discriminator |
+  | `sub_type` | `:friend` / `:group` / `:other` | yes | `:friend` for normal PM, `:group` for group temp chat |
+  | `message_id` | `integer()` | yes | Unique message ID |
+  | `user_id` | `integer()` | yes | Sender's QQ number |
+  | `message` | `String.t()` \\| `[Segment.t()]` | yes | Message content |
+  | `raw_message` | `String.t()` | no | Raw CQ-code string |
+  | `font` | `integer()` | no | Font identifier |
+  | `target_id` | `integer()` | no | Target group ID (for group temp chat) |
+  | `temp_source` | `integer()` | no | Temp session source |
+  | `sender.user_id` | `integer()` | yes | Sender's QQ number |
+  | `sender.nickname` | `String.t()` | yes | Sender's nickname |
+  | `sender.sex` | `:male` / `:female` / `:unknown` | no | Sender's gender |
+  | `sender.age` | `integer()` | no | Sender's age |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.IncomingMessage.PrivateMessage.cast(%{
+      ...>   "time" => 1_700_000_000, "self_id" => 12_345,
+      ...>   "post_type" => "message", "message_type" => "private",
+      ...>   "sub_type" => "friend", "message_id" => 1001,
+      ...>   "user_id" => 67_890, "message" => "Hi",
+      ...>   "raw_message" => "Hi", "font" => 0,
+      ...>   "sender" => %{"user_id" => 67_890, "nickname" => "TestUser",
+      ...>     "sex" => "male", "age" => 18}
+      ...> })
+      iex> ev.user_id
+      67_890
+      iex> ev.sender.nickname
+      "TestUser"
+
+  ## Serialization
+
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Events.IncomingMessage.PrivateMessage{
+      ...>   time: 1, self_id: 1, post_type: :message, message_type: :private,
+      ...>   sub_type: :friend, message_id: 1, user_id: 1, message: "Hi",
+      ...>   raw_message: "Hi", font: 0, target_id: nil, temp_source: nil,
+      ...>   sender: nil
+      ...> })
+      %{time: 1, self_id: 1, post_type: :message, message_type: :private,
+        sub_type: :friend, message_id: 1, user_id: 1, message: "Hi",
+        raw_message: "Hi", font: 0, target_id: nil, temp_source: nil,
+        sender: nil}
   """
 
   use Nitory.Helper.LeafSchema
@@ -41,10 +85,56 @@ end
 
 defmodule Nitory.Events.IncomingMessage.GroupMessage do
   @moduledoc """
-  OneBot group message event schema.
+  OneBot group message event (`post_type: "message", message_type: "group"`).
 
-  Represents a message sent in a group chat, with sender role/card metadata
-  and an optional anonymous notice sub-type.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:message` | yes | Event post type |
+  | `message_type` | `:group` | yes | Message type discriminator |
+  | `sub_type` | `:normal` / `:anonymous` / `:notice` | yes | Message sub-type |
+  | `message_id` | `integer()` | yes | Unique message ID |
+  | `user_id` | `integer()` | yes | Sender's QQ number |
+  | `group_id` | `integer()` | yes | Group ID |
+  | `message` | `String.t()` \\| `[Segment.t()]` | yes | Message content |
+  | `raw_message` | `String.t()` | no | Raw CQ-code string |
+  | `font` | `integer()` | no | Font identifier |
+  | `sender.user_id` | `integer()` | yes | Sender's QQ number |
+  | `sender.nickname` | `String.t()` | yes | Sender's nickname |
+  | `sender.sex` | `:male` / `:female` / `:unknown` | no | Sender's gender |
+  | `sender.card` | `String.t()` | no | Group card name |
+  | `sender.role` | `:owner` / `:admin` / `:member` | no | Role in group |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.IncomingMessage.GroupMessage.cast(%{
+      ...>   "time" => 1_700_000_000, "self_id" => 12_345,
+      ...>   "post_type" => "message", "message_type" => "group",
+      ...>   "sub_type" => "normal", "message_id" => 2001,
+      ...>   "user_id" => 67_890, "group_id" => 99_999,
+      ...>   "message" => "hello", "raw_message" => "hello", "font" => 0,
+      ...>   "sender" => %{"user_id" => 67_890, "nickname" => "User",
+      ...>     "card" => "Admin", "role" => "admin"}
+      ...> })
+      iex> ev.group_id
+      99_999
+      iex> ev.sender.role
+      :admin
+
+  ## Serialization
+
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Events.IncomingMessage.GroupMessage{
+      ...>   time: 1, self_id: 1, post_type: :message, message_type: :group,
+      ...>   sub_type: :normal, message_id: 1, user_id: 1, group_id: 1,
+      ...>   message: "hi", raw_message: "hi", font: 0,
+      ...>   sender: %Nitory.Events.IncomingMessage.GroupMessage.Sender{
+      ...>     user_id: 1, nickname: "U", sex: nil, card: nil, role: :member}
+      ...> })
+      %{time: 1, self_id: 1, post_type: :message, message_type: :group,
+        sub_type: :normal, message_id: 1, user_id: 1, group_id: 1,
+        message: "hi", raw_message: "hi", font: 0,
+        sender: %{user_id: 1, nickname: "U", sex: nil, card: nil, role: :member}}
   """
 
   use Nitory.Helper.LeafSchema
@@ -98,7 +188,9 @@ defmodule Nitory.Events.IncomingMessage do
 
   def cast(t), do: {:error, "Unsupported incoming message event: #{inspect(t)}"}
 
+  @doc false
   def dump(_), do: :error
 
+  @doc false
   def load(_), do: :error
 end
