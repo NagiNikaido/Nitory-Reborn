@@ -1,5 +1,7 @@
 # Nitory
 
+[![builds.sr.ht status](https://builds.sr.ht/~naginikaido.svg)](https://builds.sr.ht/~naginikaido?)
+
 A OneBot-compatible QQ bot framework built with Elixir and Phoenix.
 Connects to a OneBot WebSocket client, parses incoming events, and
 dispatches commands through a plugin system with composable middleware.
