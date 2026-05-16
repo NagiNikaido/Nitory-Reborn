@@ -193,5 +193,13 @@ defmodule Nitory.EventTest do
     doctest Nitory.Events.MetaEvent.Lifecycle
     doctest Nitory.Events.Request.FriendRequest
     doctest Nitory.Events.Request.GroupRequest
+    doctest Nitory.Events.Notice.FriendRecall
+    doctest Nitory.Events.Notice.FriendAdd
+    doctest Nitory.Events.Notice.GroupRecall
+    doctest Nitory.Events.Notice.GroupBan
+    doctest Nitory.Events.Notice.GroupIncrease
+    doctest Nitory.Events.Notice.GroupDecrease
+    doctest Nitory.Events.Notice.GroupAdmin
+    doctest Nitory.Events.Notice.GroupUpload
   end
 end

@@ -17,7 +17,7 @@ defmodule Nitory.Events.IncomingMessage.PrivateMessage do
   | `sub_type` | `:friend` / `:group` / `:other` | yes | `:friend` for normal PM, `:group` for group temp chat |
   | `message_id` | `integer()` | yes | Unique message ID |
   | `user_id` | `integer()` | yes | Sender's QQ number |
-  | `message` | `String.t()` \\| `[Segment.t()]` | yes | Message content |
+  | `message` | `String.t()` | `[Segment.t()]` | yes | Message content |
   | `raw_message` | `String.t()` | no | Raw CQ-code string |
   | `font` | `integer()` | no | Font identifier |
   | `target_id` | `integer()` | no | Target group ID (for group temp chat) |
@@ -97,7 +97,7 @@ defmodule Nitory.Events.IncomingMessage.GroupMessage do
   | `message_id` | `integer()` | yes | Unique message ID |
   | `user_id` | `integer()` | yes | Sender's QQ number |
   | `group_id` | `integer()` | yes | Group ID |
-  | `message` | `String.t()` \\| `[Segment.t()]` | yes | Message content |
+  | `message` | `String.t()` | `[Segment.t()]` | yes | Message content |
   | `raw_message` | `String.t()` | no | Raw CQ-code string |
   | `font` | `integer()` | no | Font identifier |
   | `sender.user_id` | `integer()` | yes | Sender's QQ number |
