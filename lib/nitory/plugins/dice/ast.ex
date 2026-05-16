@@ -1,9 +1,18 @@
 defmodule Nitory.Plugins.Dice.AST do
+  @moduledoc """
+  Dice expression AST types, parsers, and evaluator.
+
+  Two levels of AST are defined:
+
+  - `DiceAST` — a single dice specification (e.g. `3d6`, `6d20h1`)
+  - `DiceExpr` — an arithmetic expression of one or more `DiceAST`
+    units, with optional repeat count (e.g. `2d20h1+5`, `3#6d10a8`)
+  """
   defmodule DiceAST do
     @moduledoc """
     Single-dice specification struct and parser.
 
-    Parses dice notation like `3d6`, `6d20h1`, `6d10a8e10` via Ergo.
+    A complete dice format unit: `[count]d[face][a<b][b>u][hN][lN][eT]`.
     """
     @type t :: %__MODULE__{
             cnt: pos_integer(),
@@ -139,10 +148,10 @@ defmodule Nitory.Plugins.Dice.AST do
         if(dice.extra == nil, do: "", else: "e#{dice.extra}")
     end
 
-    @moduledoc """
-    Ergo parser combinators for single dice notation.
-    """
     defmodule Parser do
+      @moduledoc """
+      Ergo parser combinators for single dice notation.
+      """
       alias Ergo
       alias Ergo.Context
       import Ergo.{Terminals, Combinators, Numeric, Meta}
@@ -264,13 +273,13 @@ defmodule Nitory.Plugins.Dice.AST do
     end
   end
 
-  @doc """
-  Full dice expression parser and evaluator.
-
-  Handles arithmetic of one or more DiceAST units with optional
-  repeat counts.  E.g. 3#2d20h1+5.
-  """
   defmodule DiceExpr do
+    @moduledoc """
+    Full dice expression parser and evaluator.
+
+    Handles arithmetic of one or more DiceAST units with optional
+    repeat counts.  E.g. 3#2d20h1+5.
+    """
     @type dice_cell :: %{type: :cell, ast: DiceAST.t() | number() | dice_expr()}
     @type term_ops :: :* | :/
     @type expr_ops :: :+ | :-
@@ -292,11 +301,11 @@ defmodule Nitory.Plugins.Dice.AST do
             repeat: integer() | nil
           }
 
-    @moduledoc """
-    Ergo parser combinators for full dice expressions with optional
-    repeat counts and a default-dice fallback.
-    """
     defmodule Parser do
+      @moduledoc """
+      Ergo parser combinators for full dice expressions with optional
+      repeat counts and a default-dice fallback.
+      """
       alias Ergo
       alias Ergo.Context
       import Ergo.{Terminals, Combinators, Numeric, Meta}

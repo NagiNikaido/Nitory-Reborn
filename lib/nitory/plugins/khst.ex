@@ -43,8 +43,10 @@ defmodule Nitory.Plugins.Khst do
   defmodule History do
     @moduledoc """
     Ecto schema for keyword-to-picture association history.
+
     Each history entry records which picture was sent for a keyword
-    in response to a specific message, enabling undo via .del.
+    in response to a specific message, enabling deletion of the
+    corresponding keyword-picture association.
     """
     use Ecto.Schema
 
