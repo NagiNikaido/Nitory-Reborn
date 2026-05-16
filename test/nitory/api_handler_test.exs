@@ -29,9 +29,8 @@ defmodule Nitory.ApiHandlerTest do
     check all(
             id <- integer(1..1_048_576),
             message_id <- integer(1..1_048_576),
-            message <- string(:alphanumeric),
+            message <- string(:alphanumeric, min_length: 1),
             action <- member_of([:send_group_msg, :send_private_msg]),
-            message != "",
             initial_size: 2000
           ) do
       {input, output} = get_proper_io(action, id, message, message_id)
