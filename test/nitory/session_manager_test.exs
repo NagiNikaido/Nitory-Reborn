@@ -2,13 +2,12 @@ defmodule Nitory.SessionManagerTest do
   use Nitory.DataCase
 
   setup do
-    if pid = Process.whereis(Nitory.ApiSlot) do
-      Process.exit(pid, :normal)
+    for name <- [Nitory.ApiSlot, Nitory.ApiHandler, Nitory.SessionManager] do
+      if pid = Process.whereis(name), do: Process.exit(pid, :normal)
     end
+    :timer.sleep(10)
 
-    unless Process.whereis(Nitory.SessionManager) do
-      start_link_supervised!(Nitory.SessionManager)
-    end
+    start_link_supervised!(Nitory.SessionManager)
 
     Phoenix.PubSub.subscribe(Nitory.PubSub, "socket")
     :ok
