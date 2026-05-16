@@ -1,5 +1,6 @@
 defmodule Nitory.Helper.LeafSchemaTest do
   use ExUnit.Case, async: true
+  use ExUnitProperties
 
   defmodule TestSchema do
     use Nitory.Helper.LeafSchema
@@ -61,6 +62,88 @@ defmodule Nitory.Helper.LeafSchemaTest do
     test "dumps embedded schema" do
       schema = TestSchema.new!(%{"name" => "G", "meta" => %{"tags" => ["x", "y"]}})
       assert %{name: "G", meta: %{tags: ["x", "y"]}} = TestSchema.dump(schema)
+    end
+  end
+
+  describe "property-based tests" do
+    test "new + dump roundtrips name" do
+      check all(
+              name <- string(:alphanumeric, min_length: 1)
+            ) do
+        assert {:ok, schema} = TestSchema.new(%{"name" => name})
+        assert %{name: ^name} = TestSchema.dump(schema)
+      end
+    end
+
+    test "new + dump roundtrips with optional fields" do
+      check all(
+              name <- string(:alphanumeric, min_length: 1),
+              age <- integer(0..120),
+              kind <- member_of(["a", "b"]),
+              tag_count <- integer(0..3),
+              tags <- list_of(string(:alphanumeric, min_length: 1), length: tag_count)
+            ) do
+        params = %{
+          "name" => name,
+          "age" => age,
+          "kind" => kind,
+          "meta" => %{"tags" => tags}
+        }
+
+        assert {:ok, schema} = TestSchema.new(params)
+        assert %{name: ^name, age: ^age, kind: kind_atom} = TestSchema.dump(schema)
+        assert kind_atom == String.to_existing_atom(kind)
+        assert %{tags: ^tags} = TestSchema.dump(schema).meta
+      end
+    end
+
+    test "cast + dump roundtrips with string keys" do
+      check all(
+              name <- string(:alphanumeric, min_length: 1),
+              age <- integer(0..120),
+              kind <- member_of(["a", "b"]),
+              tag_count <- integer(0..2),
+              tags <- list_of(string(:alphanumeric, min_length: 1), length: tag_count)
+            ) do
+        params = %{
+          "name" => name,
+          "age" => age,
+          "kind" => kind,
+          "meta" => %{"tags" => tags}
+        }
+
+        assert {:ok, schema} = TestSchema.cast(params)
+        assert %{name: ^name, age: ^age} = TestSchema.dump(schema)
+      end
+    end
+
+    test "new! with valid random fields succeeds" do
+      check all(
+              name <- string(:alphanumeric, min_length: 1),
+              age <- integer(0..120),
+              kind <- member_of(["a", "b"]),
+              tag_count <- integer(0..2),
+              tags <- list_of(string(:alphanumeric, min_length: 1), length: tag_count)
+            ) do
+        schema =
+          TestSchema.new!(%{
+            "name" => name,
+            "age" => age,
+            "kind" => kind,
+            "meta" => %{"tags" => tags}
+          })
+
+        assert %TestSchema{name: ^name} = schema
+      end
+    end
+
+    test "new with missing required name returns error" do
+      check all(
+              age <- integer(0..120),
+              kind <- member_of(["a", "b"])
+            ) do
+        assert {:error, _} = TestSchema.new(%{"age" => age, "kind" => kind})
+      end
     end
   end
 end
