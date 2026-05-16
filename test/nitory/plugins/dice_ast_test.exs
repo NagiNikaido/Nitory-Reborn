@@ -138,4 +138,9 @@ defmodule Nitory.Plugins.Dice.ASTTest do
       refute Nitory.Plugins.Dice.AST.dice_expr_leading?(" world")
     end
   end
+
+  describe "doctests" do
+    doctest Nitory.Plugins.Dice.AST.DiceAST
+    doctest Nitory.Plugins.Dice.AST.DiceExpr
+  end
 end

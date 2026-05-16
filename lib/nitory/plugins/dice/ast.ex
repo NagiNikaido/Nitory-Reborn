@@ -35,9 +35,11 @@ defmodule Nitory.Plugins.Dice.AST do
 
     `to_string/1` converts a `DiceAST` struct back to canonical form:
 
-        iex> DiceAST.new!(cnt: 3, face: 6) |> DiceAST.to_string()
+        iex> {:ok, dice} = DiceAST.new(cnt: 3, face: 6)
+        iex> DiceAST.to_string(dice)
         "3d6"
-        iex> DiceAST.new!(cnt: 6, face: 20, opt: {:high, 1}) |> DiceAST.to_string()
+        iex> {:ok, dice} = DiceAST.new(cnt: 6, face: 20, opt: {:high, 1})
+        iex> DiceAST.to_string(dice)
         "6d20h1"
 
     ## Parsing
@@ -328,12 +330,25 @@ defmodule Nitory.Plugins.Dice.AST do
 
     ## Examples
 
-        iex> DiceExpr.parse!("3d6")
-        (evaluates 3d6 once)
-        iex> DiceExpr.parse!("2#6d20h1")
-        (evaluates 6d20h1 twice)
-        iex> DiceExpr.parse!("2d10+5*3d6-1")
-        (arithmetic of multiple dice units and constants)
+        iex> {:ok, ast} = DiceExpr.parse("3d6")
+        iex> {ast.type, ast.repeat}
+        {:full_expr, nil}
+
+        iex> {:ok, ast} = DiceExpr.parse("2#6d20h1")
+        iex> {ast.type, ast.repeat}
+        {:full_expr, 2}
+
+        iex> {:ok, ast} = DiceExpr.parse("2d10+5*3d6-1")
+        iex> {ast.type, ast.repeat}
+        {:full_expr, nil}
+
+        iex> {:error, reason} = DiceExpr.parse("not-a-dice-expression")
+        iex> is_list(reason)
+        true
+
+        iex> {:ok, ast} = DiceExpr.parse("3d6")
+        iex> ast.type
+        :full_expr
 
     ## Parsing
 
