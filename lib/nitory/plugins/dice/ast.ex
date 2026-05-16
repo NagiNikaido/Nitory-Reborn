@@ -309,8 +309,37 @@ defmodule Nitory.Plugins.Dice.AST do
     @moduledoc """
     Full dice expression parser and evaluator.
 
-    Handles arithmetic of one or more DiceAST units with optional
-    repeat counts.  E.g. 3#2d20h1+5.
+    ## Grammar (BNF)
+
+        <full_expr> ::= number # <expr> | <expr>
+        <expr>      ::= <term> + <expr> | <term> - <expr> | <term>
+        <term>      ::= <cell> * <term> | <cell> / <term> | <cell>
+        <cell>      ::= DiceAST | number | ( <expr> )
+
+    | Level | Meaning | Default |
+    |-------|---------|---------|
+    | `<full_expr>` | Top-level expression, optionally repeated | No `#` → single evaluation |
+    | `<expr>` | Addition / subtraction of terms | Empty expression uses the session default dice |
+    | `<term>` | Multiplication / division of cells | — |
+    | `<cell>` | A single dice unit (`DiceAST`), literal number, or parenthesized sub-expression | Omitted fields filled from session default |
+
+    When the entire expression is omitted, the session's default dice
+    (set per chat via `.r` plugin configuration) is evaluated as-is.
+
+    ## Examples
+
+        iex> DiceExpr.parse!("3d6")
+        (evaluates 3d6 once)
+        iex> DiceExpr.parse!("2#6d20h1")
+        (evaluates 6d20h1 twice)
+        iex> DiceExpr.parse!("2d10+5*3d6-1")
+        (arithmetic of multiple dice units and constants)
+
+    ## Parsing
+
+    `parse/2` (or `parse/1` with implicit default dice) returns
+    `{:ok, ast}` or `{:error, reason}`.  `parse!/2` raises on failure.
+    Parsing is powered by Ergo (see `DiceExpr.Parser`).
     """
     @type dice_cell :: %{type: :cell, ast: DiceAST.t() | number() | dice_expr()}
     @type term_ops :: :* | :/
