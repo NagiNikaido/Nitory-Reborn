@@ -13,16 +13,25 @@ defmodule Nitory.Message.Segment.Text do
   | `type` | `:text` | yes | Segment type discriminator |
   | `data.text` | `String.t()` | yes | Plain text content |
 
-  ### OneBot JSON
+  ## Deserialization (JSON → struct)
 
-      {"type": "text", "data": {"text": "hello"}}
+  `cast/1` accepts a raw OneBot map with string keys:
 
-  ### Elixir struct
+      iex> {:ok, seg} = Nitory.Message.Segment.Text.cast(%{type: :text, data: %{text: "hello"}})
+      iex> seg.type
+      :text
+      iex> seg.data.text
+      "hello"
 
-      %Nitory.Message.Segment.Text{
-        type: :text,
-        data: %Nitory.Message.Segment.Text.Datum{text: "hello"}
-      }
+  ## Serialization (struct → map)
+
+  `Nitory.Helper.LeafSchema.dump/1` converts back for OneBot transport:
+
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Message.Segment.Text{
+      ...>   type: :text,
+      ...>   data: %Nitory.Message.Segment.Text.Datum{text: "hello"}
+      ...> })
+      %{type: :text, data: %{text: "hello"}}
   """
 
   use Nitory.Helper.LeafSchema
@@ -49,23 +58,27 @@ defmodule Nitory.Message.Segment.Image do
   | `data.summary` | `String.t()` | no | Accessibility summary (alt text) |
   | `data.sub_type` | `:normal` / `:custom` | no | `:normal` for standard image, `:custom` for sticker/emoji |
 
-  ### OneBot JSON (normal image)
+  ## Deserialization (JSON → struct)
 
-      {"type": "image", "data": {
-        "file": "abc.jpg",
-        "url": "https://example.com/abc.jpg",
-        "subType": 0
-      }}
+      iex> {:ok, seg} = Nitory.Message.Segment.Image.cast(%{
+      ...>   "type" => "image",
+      ...>   "data" => %{"file" => "abc.jpg", "url" => "https://example.com/abc.jpg", "sub_type" => 0}
+      ...> })
+      iex> seg.data.file
+      "abc.jpg"
+      iex> seg.data.sub_type
+      :normal
 
-  ### Elixir struct
+  ## Serialization (struct → map)
 
-      %Nitory.Message.Segment.Image{
-        type: :image,
-        data: %Nitory.Message.Segment.Image.Datum{
-          file: "abc.jpg", url: "https://example.com/abc.jpg",
-          thumb: nil, summary: nil, sub_type: :normal
-        }
-      }
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Message.Segment.Image{
+      ...>   type: :image,
+      ...>   data: %Nitory.Message.Segment.Image.Datum{
+      ...>     file: "abc.jpg", url: "https://example.com/abc.jpg",
+      ...>     thumb: nil, summary: nil, sub_type: :normal
+      ...>   }
+      ...> })
+      %{data: %{file: "abc.jpg", summary: nil, sub_type: :normal, thumb: nil, url: "https://example.com/abc.jpg"}, type: :image}
   """
 
   use Nitory.Helper.LeafSchema
@@ -93,17 +106,31 @@ defmodule Nitory.Message.Segment.At do
   | `data.qq` | `String.t()` \\| `integer()` | yes | Target QQ number, or `"all"` for @everyone |
   | `data.name` | `String.t()` | no | Display name (usually group card or nickname) |
 
-  ### OneBot JSON
+  ## Deserialization (JSON → struct)
 
-      {"type": "at", "data": {"qq": 123456, "name": "小明"}}
-      {"type": "at", "data": {"qq": "all"}}
+      iex> {:ok, seg} = Nitory.Message.Segment.At.cast(%{
+      ...>   "type" => "at", "data" => %{"qq" => 123456, "name" => "小明"}
+      ...> })
+      iex> seg.data.qq
+      123456
+      iex> seg.data.name
+      "小明"
 
-  ### Elixir struct
+  ## @everyone
 
-      %Nitory.Message.Segment.At{
-        type: :at,
-        data: %Nitory.Message.Segment.At.Datum{qq: 123456, name: "小明"}
-      }
+      iex> {:ok, seg} = Nitory.Message.Segment.At.cast(%{
+      ...>   "type" => "at", "data" => %{"qq" => "all"}
+      ...> })
+      iex> seg.data.qq
+      "all"
+
+  ## Serialization (struct → map)
+
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Message.Segment.At{
+      ...>   type: :at,
+      ...>   data: %Nitory.Message.Segment.At.Datum{qq: 123456, name: "小明"}
+      ...> })
+      %{type: :at, data: %{name: "小明", qq: 123456}}
   """
 
   use Nitory.Helper.LeafSchema
@@ -127,16 +154,21 @@ defmodule Nitory.Message.Segment.Reply do
   | `type` | `:reply` | yes | Segment type discriminator |
   | `data.id` | `String.t()` | yes | Message ID being replied to |
 
-  ### OneBot JSON
+  ## Deserialization (JSON → struct)
 
-      {"type": "reply", "data": {"id": "10086"}}
+      iex> {:ok, seg} = Nitory.Message.Segment.Reply.cast(%{
+      ...>   "type" => "reply", "data" => %{"id" => "10086"}
+      ...> })
+      iex> seg.data.id
+      "10086"
 
-  ### Elixir struct
+  ## Serialization (struct → map)
 
-      %Nitory.Message.Segment.Reply{
-        type: :reply,
-        data: %Nitory.Message.Segment.Reply.Datum{id: "10086"}
-      }
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Message.Segment.Reply{
+      ...>   type: :reply,
+      ...>   data: %Nitory.Message.Segment.Reply.Datum{id: "10086"}
+      ...> })
+      %{type: :reply, data: %{id: "10086"}}
 
   > The reply segment carries only the original message ID.  Full reply
   > metadata (sender, content, time) is available via

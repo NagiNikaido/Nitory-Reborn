@@ -97,4 +97,11 @@ defmodule Nitory.MessageSegmentTest do
       assert {:ok, [%{type: :text, data: %{text: "hi"}}]} = Message.dump(segments)
     end
   end
+
+  describe "doctests" do
+    doctest Nitory.Message.Segment.Text
+    doctest Nitory.Message.Segment.Image
+    doctest Nitory.Message.Segment.At
+    doctest Nitory.Message.Segment.Reply
+  end
 end
