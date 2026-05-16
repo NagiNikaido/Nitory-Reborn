@@ -6,9 +6,23 @@ end
 
 defmodule Nitory.Message.Segment.Text do
   @moduledoc """
-  OneBot text message segment schema.
+  OneBot text segment (`type: "text"`).
 
-  Contains a single `data.text` field with the plain text content.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `type` | `:text` | yes | Segment type discriminator |
+  | `data.text` | `String.t()` | yes | Plain text content |
+
+  ### OneBot JSON
+
+      {"type": "text", "data": {"text": "hello"}}
+
+  ### Elixir struct
+
+      %Nitory.Message.Segment.Text{
+        type: :text,
+        data: %Nitory.Message.Segment.Text.Datum{text: "hello"}
+      }
   """
 
   use Nitory.Helper.LeafSchema
@@ -24,10 +38,34 @@ end
 
 defmodule Nitory.Message.Segment.Image do
   @moduledoc """
-  OneBot image message segment schema.
+  OneBot image segment (`type: "image"`).
 
-  Contains image metadata: local file path, thumbnail, remote URL,
-  summary (for accessibility), and sub-type (`:normal` or `:custom`).
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `type` | `:image` | yes | Segment type discriminator |
+  | `data.file` | `String.t()` | yes | Image filename or path on local filesystem |
+  | `data.url` | `String.t()` | no | Remote URL of the image |
+  | `data.thumb` | `String.t()` | no | Thumbnail URL |
+  | `data.summary` | `String.t()` | no | Accessibility summary (alt text) |
+  | `data.sub_type` | `:normal` / `:custom` | no | `:normal` for standard image, `:custom` for sticker/emoji |
+
+  ### OneBot JSON (normal image)
+
+      {"type": "image", "data": {
+        "file": "abc.jpg",
+        "url": "https://example.com/abc.jpg",
+        "subType": 0
+      }}
+
+  ### Elixir struct
+
+      %Nitory.Message.Segment.Image{
+        type: :image,
+        data: %Nitory.Message.Segment.Image.Datum{
+          file: "abc.jpg", url: "https://example.com/abc.jpg",
+          thumb: nil, summary: nil, sub_type: :normal
+        }
+      }
   """
 
   use Nitory.Helper.LeafSchema
@@ -47,10 +85,25 @@ end
 
 defmodule Nitory.Message.Segment.At do
   @moduledoc """
-  OneBot at-mention message segment schema.
+  OneBot at-mention segment (`type: "at"`).
 
-  Represents an @mention targeting a QQ user. The `qq` field accepts
-  either a string (e.g. `"all"`) or an integer user ID.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `type` | `:at` | yes | Segment type discriminator |
+  | `data.qq` | `String.t()` \\| `integer()` | yes | Target QQ number, or `"all"` for @everyone |
+  | `data.name` | `String.t()` | no | Display name (usually group card or nickname) |
+
+  ### OneBot JSON
+
+      {"type": "at", "data": {"qq": 123456, "name": "小明"}}
+      {"type": "at", "data": {"qq": "all"}}
+
+  ### Elixir struct
+
+      %Nitory.Message.Segment.At{
+        type: :at,
+        data: %Nitory.Message.Segment.At.Datum{qq: 123456, name: "小明"}
+      }
   """
 
   use Nitory.Helper.LeafSchema
@@ -67,10 +120,27 @@ end
 
 defmodule Nitory.Message.Segment.Reply do
   @moduledoc """
-  OneBot reply message segment schema.
+  OneBot reply segment (`type: "reply"`).
 
-  Represents a reply to a previous message, identified by the original
-  message's `data.id`.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `type` | `:reply` | yes | Segment type discriminator |
+  | `data.id` | `String.t()` | yes | Message ID being replied to |
+
+  ### OneBot JSON
+
+      {"type": "reply", "data": {"id": "10086"}}
+
+  ### Elixir struct
+
+      %Nitory.Message.Segment.Reply{
+        type: :reply,
+        data: %Nitory.Message.Segment.Reply.Datum{id: "10086"}
+      }
+
+  > The reply segment carries only the original message ID.  Full reply
+  > metadata (sender, content, time) is available via
+  > `Nitory.Events.IncomingMessage` events.
   """
 
   use Nitory.Helper.LeafSchema
@@ -98,6 +168,7 @@ defmodule Nitory.Message.Segment do
 
   @type t :: Text.t() | Image.t() | At.t() | Reply.t()
 
+  @doc false
   def type, do: :any
 
   @spec cast(map()) :: {:ok, t()} | {:error, term()}
@@ -115,8 +186,10 @@ defmodule Nitory.Message.Segment do
 
   def cast(t), do: {:error, "Unsupported segment #{inspect(t)}!"}
 
+  @doc false
   def dump(t), do: {:ok, Nitory.Helper.LeafSchema.dump(t)}
 
+  @doc false
   def load(_), do: :error
 end
 
@@ -134,6 +207,7 @@ defmodule Nitory.Message do
 
   @type t :: String.t() | [Segment.t()]
 
+  @doc false
   def type, do: :any
 
   @spec cast(String.t()) :: {:ok, String.t()}
@@ -159,8 +233,10 @@ defmodule Nitory.Message do
 
   def cast(t), do: {:error, "Unsupported message #{inspect(t)}!"}
 
+  @doc false
   def dump(msg) when is_binary(msg), do: {:ok, msg}
 
+  @doc false
   def dump(msg) when is_list(msg) do
     msg_list = Enum.map(msg, &Segment.dump/1)
 
@@ -171,7 +247,9 @@ defmodule Nitory.Message do
     end
   end
 
+  @doc false
   def embed_as(_), do: :dump
 
+  @doc false
   def load(_), do: :error
 end
