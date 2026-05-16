@@ -12,7 +12,39 @@ defmodule Nitory.Plugins.Dice.AST do
     @moduledoc """
     Single-dice specification struct and parser.
 
-    A complete dice format unit: `[count]d[face][a<b][b>u][hN][lN][eT]`.
+    ## Format
+
+    A complete dice format unit in canonical string form:
+
+        [$count]d[$face][[h$high][l$low][a$lower_bound][b$upper_bound]][e$extra]
+
+    | Field | Key | Meaning |
+    |-------|-----|---------|
+    | `cnt` | `$count` | Number of dice to roll (positive integer) |
+    | `face` | `$face` | Number of faces per die (positive integer, >= 2) |
+    | `opt` | `h$high` | Keep the highest $high dice, discard the rest |
+    | `opt` | `l$low` | Keep the lowest $low dice, discard the rest |
+    | `opt` | `a$lower_bound` | Count successes: each die >= $lower_bound |
+    | `opt` | `b$upper_bound` | Count successes: each die <= $upper_bound |
+    | `extra` | `e$extra` | Exploding: re-roll and add for each die >= $extra (or <= $extra when combined with b) |
+
+    `opt` accepts at most one of `h`, `l`, `a`, `b`.  All count values must
+    be less than `cnt` (for `h`/`l`) or within `[1, face]` (for `a`/`b`).
+
+    ## Serialization
+
+    `to_string/1` converts a `DiceAST` struct back to canonical form:
+
+        iex> DiceAST.new!(cnt: 3, face: 6) |> DiceAST.to_string()
+        "3d6"
+        iex> DiceAST.new!(cnt: 6, face: 20, opt: {:high, 1}) |> DiceAST.to_string()
+        "6d20h1"
+
+    ## Parsing
+
+    `parse/1` and `parse!/1` accept a binary in the canonical format
+    and return `{:ok, DiceAST.t()}` or raise `ArgumentError`.  Parsing
+    is powered by Ergo (see `DiceAST.Parser`).
     """
     @type t :: %__MODULE__{
             cnt: pos_integer(),
