@@ -1,5 +1,6 @@
 defmodule Nitory.NicknameTest do
   use Nitory.DataCase
+  use ExUnitProperties
 
   alias Nitory.Nickname
   alias Nitory.Repo
@@ -33,6 +34,47 @@ defmodule Nitory.NicknameTest do
       Nickname.set_nick(104, 204, "TempNick")
       assert {:ok, _} = Nickname.rm_nick(104, 204)
       assert nil == Repo.get_by(Nickname, user_id: 104, group_id: 204)
+    end
+  end
+
+  describe "property-based tests" do
+    test "set_nick then get_nick roundtrips" do
+      check all(
+              user_id <- integer(1_000..9_999),
+              group_id <- integer(1_000..9_999),
+              nick <- string(:alphanumeric, min_length: 1),
+              default <- string(:alphanumeric)
+            ) do
+        Nickname.set_nick(user_id, group_id, nick)
+        assert nick == Nickname.get_nick(user_id, group_id, default)
+      end
+    end
+
+    test "set_nick overwrites previous value" do
+      check all(
+              user_id <- integer(10_000..19_999),
+              group_id <- integer(10_000..19_999),
+              first <- string(:alphanumeric, min_length: 1),
+              second <- string(:alphanumeric, min_length: 1),
+              first != second
+            ) do
+        Nickname.set_nick(user_id, group_id, first)
+        Nickname.set_nick(user_id, group_id, second)
+        assert second == Nickname.get_nick(user_id, group_id, "")
+      end
+    end
+
+    test "rm_nick falls back to default" do
+      check all(
+              user_id <- integer(20_000..29_999),
+              group_id <- integer(20_000..29_999),
+              nick <- string(:alphanumeric, min_length: 1),
+              default <- string(:alphanumeric)
+            ) do
+        Nickname.set_nick(user_id, group_id, nick)
+        Nickname.rm_nick(user_id, group_id)
+        assert default == Nickname.get_nick(user_id, group_id, default)
+      end
     end
   end
 end
