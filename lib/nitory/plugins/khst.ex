@@ -14,8 +14,10 @@ defmodule Nitory.Plugins.Khst do
 
   use Nitory.Plugin
   import Ecto.Query, only: [from: 2]
-
   defmodule Picture do
+    @moduledoc """
+    Ecto schema for stored Khst picture files (hash, path).
+    """
     use Ecto.Schema
 
     schema "khst_picture" do
@@ -25,8 +27,10 @@ defmodule Nitory.Plugins.Khst do
       has_many :history, Nitory.Plugins.Khst.History
     end
   end
-
   defmodule Keyword2Picture do
+    @moduledoc """
+    Ecto schema linking keywords to pictures with optional tags.
+    """
     use Ecto.Schema
 
     schema "khst_keyword2picture" do
@@ -36,8 +40,14 @@ defmodule Nitory.Plugins.Khst do
       belongs_to :picture, Nitory.Plugins.Khst.Picture
     end
   end
-
   defmodule History do
+    @moduledoc """
+    Ecto schema for keyword-to-picture association history.
+
+    Each history entry records which picture was sent for a keyword
+    in response to a specific message, enabling deletion of the
+    corresponding keyword-picture association.
+    """
     use Ecto.Schema
 
     schema "khst_history" do

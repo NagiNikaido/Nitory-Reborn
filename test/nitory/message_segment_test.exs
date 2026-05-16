@@ -1,5 +1,6 @@
 defmodule Nitory.MessageSegmentTest do
   use ExUnit.Case, async: true
+  use ExUnitProperties
 
   alias Nitory.Message
   alias Nitory.Message.Segment
@@ -47,8 +48,8 @@ defmodule Nitory.MessageSegmentTest do
 
   describe "Segment.At" do
     test "casts at segment with integer qq" do
-      assert {:ok, %Segment.At{data: %{qq: 12345}}} =
-               Segment.cast(%{"type" => "at", "data" => %{"qq" => 12345}})
+      assert {:ok, %Segment.At{data: %{qq: 12_345}}} =
+               Segment.cast(%{"type" => "at", "data" => %{"qq" => 12_345}})
     end
 
     test "casts at segment with string qq" do
@@ -95,6 +96,65 @@ defmodule Nitory.MessageSegmentTest do
     test "dumps segment list" do
       segments = [Segment.Text.new!(%{data: %{text: "hi"}})]
       assert {:ok, [%{type: :text, data: %{text: "hi"}}]} = Message.dump(segments)
+    end
+  end
+
+  describe "doctests" do
+    doctest Nitory.Message.Segment.Text
+    doctest Nitory.Message.Segment.Image
+    doctest Nitory.Message.Segment.At
+    doctest Nitory.Message.Segment.Reply
+  end
+
+  describe "property-based tests" do
+    test "Text cast + dump roundtrips" do
+      check all(
+              text <- StreamData.string(:alphanumeric, min_length: 1)
+            ) do
+        assert {:ok, seg} = Segment.Text.cast(%{"type" => "text", "data" => %{"text" => text}})
+        assert %{type: :text, data: %{text: ^text}} = Nitory.Helper.LeafSchema.dump(seg)
+      end
+    end
+
+    test "Image cast + dump roundtrips" do
+      check all(
+              file <- StreamData.string(:alphanumeric, min_length: 1),
+              url <- StreamData.string(:alphanumeric),
+              sub_type <- StreamData.member_of([0, 1])
+            ) do
+        assert {:ok, seg} = Segment.Image.cast(%{
+          "type" => "image",
+          "data" => %{"file" => file, "url" => url, "sub_type" => sub_type}
+        })
+        dump = Nitory.Helper.LeafSchema.dump(seg)
+        assert dump.data.file == file
+      end
+    end
+
+    test "At cast + dump roundtrips" do
+      check all(
+              qq <- StreamData.one_of([StreamData.integer(100_000..9_999_999), StreamData.constant("all")]),
+              name <- StreamData.string(:alphanumeric)
+            ) do
+        assert {:ok, seg} = Segment.At.cast(%{
+          "type" => "at",
+          "data" => %{"qq" => qq, "name" => name}
+        })
+        dump = Nitory.Helper.LeafSchema.dump(seg)
+        assert dump.data.qq == qq
+      end
+    end
+
+    test "Reply cast + dump roundtrips" do
+      check all(
+              id <- StreamData.string(:alphanumeric, min_length: 1)
+            ) do
+        assert {:ok, seg} = Segment.Reply.cast(%{
+          "type" => "reply",
+          "data" => %{"id" => id}
+        })
+        assert %{type: :reply, data: %{id: ^id}} = Nitory.Helper.LeafSchema.dump(seg)
+      end
     end
   end
 end

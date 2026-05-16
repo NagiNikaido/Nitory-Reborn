@@ -38,24 +38,24 @@ defmodule Nitory.Middleware do
   end
 
   @impl true
-  def handle_call({:excute_middleware, ctx}, _from, middlewares = state) do
+  def handle_call({:excute_middleware, ctx}, _from, middlewares) do
     res = run(ctx, middlewares)
-    {:reply, res, state}
+    {:reply, res, middlewares}
   end
 
   @impl true
-  def handle_call({:excute_middleware!, ctx}, _from, middlewares = state) do
+  def handle_call({:excute_middleware!, ctx}, _from, middlewares) do
     res = run(ctx, middlewares)
 
     case res do
-      :ok -> {:reply, :ok, state}
-      {:ok, payload} -> {:reply, payload, state}
+      :ok -> {:reply, :ok, middlewares}
+      {:ok, payload} -> {:reply, payload, middlewares}
       {:error, error} -> raise error
     end
   end
 
   @impl true
-  def handle_call({:register_middleware, func, mode}, _from, middlewares = _state) do
+  def handle_call({:register_middleware, func, mode}, _from, middlewares) do
     uuid = Ecto.UUID.generate()
 
     middlewares =
@@ -69,7 +69,7 @@ defmodule Nitory.Middleware do
   end
 
   @impl true
-  def handle_call({:register_middleware, module, func, args, mode}, _from, middlewares = _state) do
+  def handle_call({:register_middleware, module, func, args, mode}, _from, middlewares) do
     uuid = Ecto.UUID.generate()
 
     middlewares =
@@ -83,12 +83,12 @@ defmodule Nitory.Middleware do
   end
 
   @impl true
-  def handle_call({:list_middleware}, _from, middlewares = state) do
-    {:reply, middlewares, state}
+  def handle_call({:list_middleware}, _from, middlewares) do
+    {:reply, middlewares, middlewares}
   end
 
   @impl true
-  def handle_cast({:dispose_middleware, uuid}, middlewares = _state) do
+  def handle_cast({:dispose_middleware, uuid}, middlewares) do
     middlewares = Enum.filter(middlewares, fn mw -> elem(mw, 0) != uuid end)
     {:noreply, middlewares}
   end

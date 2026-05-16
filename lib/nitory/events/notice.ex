@@ -22,9 +22,30 @@ end
 
 defmodule Nitory.Events.Notice.GroupUpload do
   @moduledoc """
-  OneBot group file upload notice schema.
+  OneBot group file upload notice (`notice_type: "group_upload"`).
 
-  Fires when a file is uploaded to a group, carrying the uploader and file metadata.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:notice` | yes | Event post type |
+  | `notice_type` | `:group_upload` | yes | Notice type discriminator |
+  | `group_id` | `integer()` | yes | Group ID |
+  | `user_id` | `integer()` | yes | Uploader's QQ number |
+  | `file.id` | `String.t()` | yes | File ID |
+  | `file.name` | `String.t()` | yes | File name |
+  | `file.size` | `integer()` | yes | File size (bytes) |
+  | `file.busid` | `integer()` | yes | Business ID |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Notice.GroupUpload.cast(%{
+      ...>   "time" => 1, "self_id" => 1, "post_type" => "notice",
+      ...>   "notice_type" => "group_upload", "group_id" => 1, "user_id" => 2,
+      ...>   "file" => %{"id" => "f1", "name" => "doc.pdf", "size" => 1024, "busid" => 0}
+      ...> })
+      iex> ev.file.name
+      "doc.pdf"
   """
 
   use Nitory.Helper.LeafSchema
@@ -48,9 +69,27 @@ end
 
 defmodule Nitory.Events.Notice.GroupAdmin do
   @moduledoc """
-  OneBot group admin change notice schema.
+  OneBot group admin change notice (`notice_type: "group_admin"`).
 
-  Fires when a member is promoted or demoted (`:set` / `:unset`).
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:notice` | yes | Event post type |
+  | `notice_type` | `:group_admin` | yes | Notice type discriminator |
+  | `sub_type` | `:set` / `:unset` | yes | `:set` = promoted, `:unset` = demoted |
+  | `group_id` | `integer()` | yes | Group ID |
+  | `user_id` | `integer()` | yes | Target user's QQ number |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Notice.GroupAdmin.cast(%{
+      ...>   "time" => 1, "self_id" => 1, "post_type" => "notice",
+      ...>   "notice_type" => "group_admin", "sub_type" => "set",
+      ...>   "group_id" => 1, "user_id" => 2
+      ...> })
+      iex> ev.sub_type
+      :set
   """
 
   use Nitory.Helper.LeafSchema
@@ -68,10 +107,28 @@ end
 
 defmodule Nitory.Events.Notice.GroupDecrease do
   @moduledoc """
-  OneBot group member decrease notice schema.
+  OneBot group member decrease notice (`notice_type: "group_decrease"`).
 
-  Fires when a member leaves or is removed from a group.
-  Sub-type is one of: `:leave`, `:kick`, `:kick_me`, `:disband`.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:notice` | yes | Event post type |
+  | `notice_type` | `:group_decrease` | yes | Notice type discriminator |
+  | `sub_type` | `:leave` / `:kick` / `:kick_me` / `:disband` | yes | How the member left |
+  | `group_id` | `integer()` | yes | Group ID |
+  | `user_id` | `integer()` | yes | User who left/was kicked |
+  | `operator_id` | `integer()` | yes | Operator who performed the action |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Notice.GroupDecrease.cast(%{
+      ...>   "time" => 1, "self_id" => 1, "post_type" => "notice",
+      ...>   "notice_type" => "group_decrease", "sub_type" => "leave",
+      ...>   "group_id" => 1, "user_id" => 2, "operator_id" => 3
+      ...> })
+      iex> ev.sub_type
+      :leave
   """
 
   use Nitory.Helper.LeafSchema
@@ -90,9 +147,28 @@ end
 
 defmodule Nitory.Events.Notice.GroupIncrease do
   @moduledoc """
-  OneBot group member increase notice schema.
+  OneBot group member increase notice (`notice_type: "group_increase"`).
 
-  Fires when a new member joins (`:approve`) or is invited (`:invite`).
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:notice` | yes | Event post type |
+  | `notice_type` | `:group_increase` | yes | Notice type discriminator |
+  | `sub_type` | `:approve` / `:invite` | yes | `:approve` = admin approved, `:invite` = invited |
+  | `group_id` | `integer()` | yes | Group ID |
+  | `user_id` | `integer()` | yes | New member's QQ number |
+  | `operator_id` | `integer()` | yes | Operator who approved/invited |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Notice.GroupIncrease.cast(%{
+      ...>   "time" => 1, "self_id" => 1, "post_type" => "notice",
+      ...>   "notice_type" => "group_increase", "sub_type" => "invite",
+      ...>   "group_id" => 1, "user_id" => 2, "operator_id" => 3
+      ...> })
+      iex> ev.sub_type
+      :invite
   """
 
   use Nitory.Helper.LeafSchema
@@ -111,10 +187,29 @@ end
 
 defmodule Nitory.Events.Notice.GroupBan do
   @moduledoc """
-  OneBot group ban/mute notice schema.
+  OneBot group ban/mute notice (`notice_type: "group_ban"`).
 
-  Fires when a member is banned/muted (`:ban`) or unblocked (`:lift_ban`).
-  Includes the ban duration in seconds.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:notice` | yes | Event post type |
+  | `notice_type` | `:group_ban` | yes | Notice type discriminator |
+  | `sub_type` | `:ban` / `:lift_ban` | yes | `:ban` = muted, `:lift_ban` = unmuted |
+  | `group_id` | `integer()` | yes | Group ID |
+  | `user_id` | `integer()` | yes | Target user's QQ number |
+  | `operator_id` | `integer()` | yes | Operator who performed the action |
+  | `duration` | `integer()` | yes | Ban duration in seconds |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Notice.GroupBan.cast(%{
+      ...>   "time" => 1, "self_id" => 1, "post_type" => "notice",
+      ...>   "notice_type" => "group_ban", "sub_type" => "ban",
+      ...>   "group_id" => 1, "user_id" => 2, "operator_id" => 3, "duration" => 600
+      ...> })
+      iex> ev.duration
+      600
   """
 
   use Nitory.Helper.LeafSchema
@@ -134,10 +229,28 @@ end
 
 defmodule Nitory.Events.Notice.GroupRecall do
   @moduledoc """
-  OneBot group message recall notice schema.
+  OneBot group message recall notice (`notice_type: "group_recall"`).
 
-  Fires when a message is recalled (deleted) from a group, identifying
-  the original sender, operator, and message ID.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:notice` | yes | Event post type |
+  | `notice_type` | `:group_recall` | yes | Notice type discriminator |
+  | `group_id` | `integer()` | yes | Group ID |
+  | `user_id` | `integer()` | yes | Original message sender's QQ number |
+  | `operator_id` | `integer()` | yes | Operator who recalled the message |
+  | `message_id` | `integer()` | yes | Recalled message ID |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Notice.GroupRecall.cast(%{
+      ...>   "time" => 1, "self_id" => 1, "post_type" => "notice",
+      ...>   "notice_type" => "group_recall", "group_id" => 1,
+      ...>   "user_id" => 2, "operator_id" => 3, "message_id" => 100
+      ...> })
+      iex> ev.message_id
+      100
   """
 
   use Nitory.Helper.LeafSchema
@@ -156,9 +269,24 @@ end
 
 defmodule Nitory.Events.Notice.FriendAdd do
   @moduledoc """
-  OneBot friend added notice schema.
+  OneBot friend added notice (`notice_type: "friend_add"`).
 
-  Fires when a new friend is successfully added.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:notice` | yes | Event post type |
+  | `notice_type` | `:friend_add` | yes | Notice type discriminator |
+  | `user_id` | `integer()` | yes | New friend's QQ number |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Notice.FriendAdd.cast(%{
+      ...>   "time" => 1, "self_id" => 1, "post_type" => "notice",
+      ...>   "notice_type" => "friend_add", "user_id" => 2
+      ...> })
+      iex> ev.user_id
+      2
   """
 
   use Nitory.Helper.LeafSchema
@@ -174,9 +302,25 @@ end
 
 defmodule Nitory.Events.Notice.FriendRecall do
   @moduledoc """
-  OneBot friend message recall notice schema.
+  OneBot friend message recall notice (`notice_type: "friend_recall"`).
 
-  Fires when a message is recalled in a private conversation.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:notice` | yes | Event post type |
+  | `notice_type` | `:friend_recall` | yes | Notice type discriminator |
+  | `user_id` | `integer()` | yes | Sender's QQ number |
+  | `message_id` | `integer()` | yes | Recalled message ID |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Notice.FriendRecall.cast(%{
+      ...>   "time" => 1, "self_id" => 1, "post_type" => "notice",
+      ...>   "notice_type" => "friend_recall", "user_id" => 2, "message_id" => 100
+      ...> })
+      iex> ev.message_id
+      100
   """
 
   use Nitory.Helper.LeafSchema
@@ -255,7 +399,9 @@ defmodule Nitory.Events.Notice do
 
   def cast(t), do: {:error, "Unsupported notice event: #{inspect(t)}"}
 
+  @doc false
   def dump(_), do: :error
 
+  @doc false
   def load(_), do: :error
 end

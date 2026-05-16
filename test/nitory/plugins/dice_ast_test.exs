@@ -1,5 +1,6 @@
 defmodule Nitory.Plugins.Dice.ASTTest do
   use ExUnit.Case, async: true
+  use ExUnitProperties
 
   alias Nitory.Plugins.Dice.AST.{DiceAST, DiceExpr}
 
@@ -136,6 +137,67 @@ defmodule Nitory.Plugins.Dice.ASTTest do
     test "rejects non-dice expressions" do
       refute Nitory.Plugins.Dice.AST.dice_expr_leading?("foo")
       refute Nitory.Plugins.Dice.AST.dice_expr_leading?(" world")
+    end
+  end
+
+  describe "doctests" do
+    doctest Nitory.Plugins.Dice.AST.DiceAST
+    doctest Nitory.Plugins.Dice.AST.DiceExpr
+  end
+
+  describe "property-based tests" do
+    test "DiceAST parse + to_string roundtrips for simple dice" do
+      check all(
+              cnt <- integer(1..20),
+              face <- integer(2..100)
+            ) do
+        str = "#{cnt}d#{face}"
+        assert {:ok, dice} = DiceAST.parse(str)
+        assert str == DiceAST.to_string(dice)
+      end
+    end
+
+    test "DiceAST legal? accepts all roundtripped dice" do
+      check all(
+              cnt <- integer(1..20),
+              face <- integer(2..100)
+            ) do
+        str = "#{cnt}d#{face}"
+        assert {:ok, dice} = DiceAST.parse(str)
+        assert DiceAST.legal?(dice)
+      end
+    end
+
+    test "DiceAST parse! returns struct for valid inputs" do
+      check all(
+              cnt <- integer(1..20),
+              face <- integer(2..100)
+            ) do
+        str = "#{cnt}d#{face}"
+        assert %DiceAST{} = DiceAST.parse!(str)
+      end
+    end
+
+    test "DiceExpr parse + eval for simple expressions" do
+      check all(
+              cnt <- integer(1..10),
+              face <- integer(2..20),
+              repeat <- integer(1..5)
+            ) do
+        str = "#{repeat}##{cnt}d#{face}"
+
+        case DiceExpr.parse(str) do
+          {:ok, ast} ->
+            assert ast.type == :full_expr
+            assert ast.repeat == repeat
+            result = DiceExpr.eval(ast)
+            assert is_map(result)
+            assert Map.has_key?(result, :full_lit)
+
+          {:error, _} ->
+            :ok
+        end
+      end
     end
   end
 end

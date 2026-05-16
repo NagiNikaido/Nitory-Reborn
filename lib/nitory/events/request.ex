@@ -6,10 +6,39 @@ end
 
 defmodule Nitory.Events.Request.FriendRequest do
   @moduledoc """
-  OneBot friend request event schema.
+  OneBot friend request event (`post_type: "request", request_type: "friend"`).
 
-  Represents an incoming friend invitation, including the requesting user's ID,
-  a comment message, and a flag token used for approval.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:request` | yes | Event post type |
+  | `request_type` | `:friend` | yes | Request type discriminator |
+  | `user_id` | `integer()` | yes | QQ number of the requesting user |
+  | `comment` | `String.t()` | yes | Verification message |
+  | `flag` | `String.t()` | yes | Request flag (used for approval) |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Request.FriendRequest.cast(%{
+      ...>   "time" => 1_700_000_000, "self_id" => 12_345,
+      ...>   "post_type" => "request", "request_type" => "friend",
+      ...>   "user_id" => 67_890, "comment" => "Hello!", "flag" => "abc123"
+      ...> })
+      iex> ev.user_id
+      67_890
+      iex> ev.comment
+      "Hello!"
+
+  ## Serialization
+
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Events.Request.FriendRequest{
+      ...>   time: 1_700_000_000, self_id: 12_345,
+      ...>   post_type: :request, request_type: :friend,
+      ...>   user_id: 67_890, comment: "Hi", flag: "abc"
+      ...> })
+      %{time: 1_700_000_000, self_id: 12_345, post_type: :request, request_type: :friend,
+        user_id: 67_890, comment: "Hi", flag: "abc"}
   """
 
   use Nitory.Helper.LeafSchema
@@ -27,9 +56,42 @@ end
 
 defmodule Nitory.Events.Request.GroupRequest do
   @moduledoc """
-  OneBot group request event schema.
+  OneBot group request event (`post_type: "request", request_type: "group"`).
 
-  Represents a group join request or invitation, with a sub-type of `:add` or `:invite`.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:request` | yes | Event post type |
+  | `request_type` | `:group` | yes | Request type discriminator |
+  | `sub_type` | `:add` / `:invite` | yes | `:add` for join request, `:invite` for invitation |
+  | `user_id` | `integer()` | yes | QQ number of the requesting/invited user |
+  | `comment` | `String.t()` | yes | Verification message |
+  | `flag` | `String.t()` | yes | Request flag (used for approval) |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.Request.GroupRequest.cast(%{
+      ...>   "time" => 1_700_000_000, "self_id" => 12_345,
+      ...>   "post_type" => "request", "request_type" => "group",
+      ...>   "sub_type" => "add", "user_id" => 67_890,
+      ...>   "comment" => "pls add me", "flag" => "def456"
+      ...> })
+      iex> ev.sub_type
+      :add
+      iex> ev.user_id
+      67_890
+
+  ## Serialization
+
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Events.Request.GroupRequest{
+      ...>   time: 1_700_000_000, self_id: 12_345,
+      ...>   post_type: :request, request_type: :group,
+      ...>   sub_type: :invite, user_id: 67_890,
+      ...>   comment: "join us", flag: "def"
+      ...> })
+      %{time: 1_700_000_000, self_id: 12_345, post_type: :request, request_type: :group,
+        sub_type: :invite, user_id: 67_890, comment: "join us", flag: "def"}
   """
 
   use Nitory.Helper.LeafSchema

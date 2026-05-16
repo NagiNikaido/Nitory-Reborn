@@ -6,10 +6,43 @@ end
 
 defmodule Nitory.Events.MetaEvent.Heartbeat do
   @moduledoc """
-  OneBot heartbeat event schema.
+  OneBot heartbeat event (`post_type: "meta_event", meta_event_type: "heartbeat"`).
 
   Sent periodically by the client to confirm the connection is alive.
-  Includes a status sub-object and an interval hint used for liveness monitoring.
+
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:meta_event` | yes | Event post type |
+  | `meta_event_type` | `:heartbeat` | yes | Meta event discriminator |
+  | `status.online` | `boolean()` | no | Whether the client is online |
+  | `status.good` | `boolean()` | yes | Whether the client is in a healthy state |
+  | `interval` | `integer()` | yes | Heartbeat interval hint (ms) |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.MetaEvent.Heartbeat.cast(%{
+      ...>   "time" => 1_700_000_000, "self_id" => 12_345,
+      ...>   "post_type" => "meta_event", "meta_event_type" => "heartbeat",
+      ...>   "status" => %{"online" => true, "good" => true},
+      ...>   "interval" => 5_000
+      ...> })
+      iex> ev.status.good
+      true
+      iex> ev.interval
+      5_000
+
+  ## Serialization
+
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Events.MetaEvent.Heartbeat{
+      ...>   time: 1_700_000_000, self_id: 12_345,
+      ...>   post_type: :meta_event, meta_event_type: :heartbeat,
+      ...>   status: %Nitory.Events.MetaEvent.Heartbeat.Status{online: true, good: true},
+      ...>   interval: 5_000
+      ...> })
+      %{time: 1_700_000_000, self_id: 12_345, post_type: :meta_event, meta_event_type: :heartbeat,
+        status: %{online: true, good: true}, interval: 5_000}
   """
 
   use Nitory.Helper.LeafSchema
@@ -31,9 +64,37 @@ end
 
 defmodule Nitory.Events.MetaEvent.Lifecycle do
   @moduledoc """
-  OneBot lifecycle event schema.
+  OneBot lifecycle event (`post_type: "meta_event", meta_event_type: "lifecycle"`).
 
-  Indicates the client's connection state: `:enable`, `:disable`, or `:connect`.
+  Indicates the client's connection state.
+
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `time` | `integer()` | yes | Event timestamp (Unix) |
+  | `self_id` | `integer()` | yes | Bot's own QQ number |
+  | `post_type` | `:meta_event` | yes | Event post type |
+  | `meta_event_type` | `:lifecycle` | yes | Meta event discriminator |
+  | `sub_type` | `:enable` / `:disable` / `:connect` | yes | Lifecycle phase |
+
+  ## Deserialization
+
+      iex> {:ok, ev} = Nitory.Events.MetaEvent.Lifecycle.cast(%{
+      ...>   "time" => 1_700_000_000, "self_id" => 12_345,
+      ...>   "post_type" => "meta_event", "meta_event_type" => "lifecycle",
+      ...>   "sub_type" => "connect"
+      ...> })
+      iex> ev.sub_type
+      :connect
+
+  ## Serialization
+
+      iex> Nitory.Helper.LeafSchema.dump(%Nitory.Events.MetaEvent.Lifecycle{
+      ...>   time: 1_700_000_000, self_id: 12_345,
+      ...>   post_type: :meta_event, meta_event_type: :lifecycle,
+      ...>   sub_type: :enable
+      ...> })
+      %{time: 1_700_000_000, self_id: 12_345, post_type: :meta_event, meta_event_type: :lifecycle,
+        sub_type: :enable}
   """
 
   use Nitory.Helper.LeafSchema

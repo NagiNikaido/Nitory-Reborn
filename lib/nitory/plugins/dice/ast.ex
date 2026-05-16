@@ -1,7 +1,52 @@
 defmodule Nitory.Plugins.Dice.AST do
+  @moduledoc """
+  Dice expression AST types, parsers, and evaluator.
+
+  Two levels of AST are defined:
+
+  - `DiceAST` — a single dice specification (e.g. `3d6`, `6d20h1`)
+  - `DiceExpr` — an arithmetic expression of one or more `DiceAST`
+    units, with optional repeat count (e.g. `2d20h1+5`, `3#6d10a8`)
+  """
   defmodule DiceAST do
     @moduledoc """
+    Single-dice specification struct and parser.
 
+    ## Format
+
+    A complete dice format unit in canonical string form:
+
+        [$count]d[$face][[h$high][l$low][a$lower_bound][b$upper_bound]][e$extra]
+
+    | Field | Key | Meaning |
+    |-------|-----|---------|
+    | `cnt` | `$count` | Number of dice to roll (positive integer) |
+    | `face` | `$face` | Number of faces per die (positive integer, >= 2) |
+    | `opt` | `h$high` | Keep the highest $high dice, discard the rest |
+    | `opt` | `l$low` | Keep the lowest $low dice, discard the rest |
+    | `opt` | `a$lower_bound` | Count successes: each die >= $lower_bound |
+    | `opt` | `b$upper_bound` | Count successes: each die <= $upper_bound |
+    | `extra` | `e$extra` | Exploding: re-roll and add for each die >= $extra (or <= $extra when combined with b) |
+
+    `opt` accepts at most one of `h`, `l`, `a`, `b`.  All count values must
+    be less than `cnt` (for `h`/`l`) or within `[1, face]` (for `a`/`b`).
+
+    ## Serialization
+
+    `to_string/1` converts a `DiceAST` struct back to canonical form:
+
+        iex> {:ok, dice} = DiceAST.new(cnt: 3, face: 6)
+        iex> DiceAST.to_string(dice)
+        "3d6"
+        iex> {:ok, dice} = DiceAST.new(cnt: 6, face: 20, opt: {:high, 1})
+        iex> DiceAST.to_string(dice)
+        "6d20h1"
+
+    ## Parsing
+
+    `parse/1` and `parse!/1` accept a binary in the canonical format
+    and return `{:ok, DiceAST.t()}` or raise `ArgumentError`.  Parsing
+    is powered by Ergo (see `DiceAST.Parser`).
     """
     @type t :: %__MODULE__{
             cnt: pos_integer(),
@@ -138,6 +183,9 @@ defmodule Nitory.Plugins.Dice.AST do
     end
 
     defmodule Parser do
+      @moduledoc """
+      Ergo parser combinators for single dice notation.
+      """
       alias Ergo
       alias Ergo.Context
       import Ergo.{Terminals, Combinators, Numeric, Meta}
@@ -260,6 +308,61 @@ defmodule Nitory.Plugins.Dice.AST do
   end
 
   defmodule DiceExpr do
+    @moduledoc """
+    Full dice expression parser and evaluator.
+
+    ## Grammar (BNF)
+
+        <full_expr> ::= number # <expr>
+                      | <expr>
+        <expr>      ::= <term> + <expr>
+                      | <term> - <expr>
+                      | <term>
+        <term>      ::= <cell> * <term>
+                      | <cell> / <term>
+                      | <cell>
+        <cell>      ::= DiceAST
+                      | number
+                      | ( <expr> )
+
+    | Level | Meaning | Default |
+    |-------|---------|---------|
+    | `<full_expr>` | Top-level expression, optionally repeated | No `#` → single evaluation |
+    | `<expr>` | Addition / subtraction of terms | Empty expression uses the session default dice |
+    | `<term>` | Multiplication / division of cells | — |
+    | `<cell>` | A single dice unit (`DiceAST`), literal number, or parenthesized sub-expression | Omitted fields filled from session default |
+
+    When the entire expression is omitted, the session's default dice
+    (set per chat via `.r` plugin configuration) is evaluated as-is.
+
+    ## Examples
+
+        iex> {:ok, ast} = DiceExpr.parse("3d6")
+        iex> {ast.type, ast.repeat}
+        {:full_expr, nil}
+
+        iex> {:ok, ast} = DiceExpr.parse("2#6d20h1")
+        iex> {ast.type, ast.repeat}
+        {:full_expr, 2}
+
+        iex> {:ok, ast} = DiceExpr.parse("2d10+5*3d6-1")
+        iex> {ast.type, ast.repeat}
+        {:full_expr, nil}
+
+        iex> {:error, reason} = DiceExpr.parse("not-a-dice-expression")
+        iex> is_list(reason)
+        true
+
+        iex> {:ok, ast} = DiceExpr.parse("3d6")
+        iex> ast.type
+        :full_expr
+
+    ## Parsing
+
+    `parse/2` (or `parse/1` with implicit default dice) returns
+    `{:ok, ast}` or `{:error, reason}`.  `parse!/2` raises on failure.
+    Parsing is powered by Ergo (see `DiceExpr.Parser`).
+    """
     @type dice_cell :: %{type: :cell, ast: DiceAST.t() | number() | dice_expr()}
     @type term_ops :: :* | :/
     @type expr_ops :: :+ | :-
@@ -282,6 +385,10 @@ defmodule Nitory.Plugins.Dice.AST do
           }
 
     defmodule Parser do
+      @moduledoc """
+      Ergo parser combinators for full dice expressions with optional
+      repeat counts and a default-dice fallback.
+      """
       alias Ergo
       alias Ergo.Context
       import Ergo.{Terminals, Combinators, Numeric, Meta}

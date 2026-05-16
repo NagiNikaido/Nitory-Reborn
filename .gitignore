@@ -34,3 +34,4 @@ nitory-*.tar
 /rel/
 
 /priv/plts/
+session_*.json
