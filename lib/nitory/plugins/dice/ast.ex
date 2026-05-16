@@ -313,10 +313,17 @@ defmodule Nitory.Plugins.Dice.AST do
 
     ## Grammar (BNF)
 
-        <full_expr> ::= number # <expr> | <expr>
-        <expr>      ::= <term> + <expr> | <term> - <expr> | <term>
-        <term>      ::= <cell> * <term> | <cell> / <term> | <cell>
-        <cell>      ::= DiceAST | number | ( <expr> )
+        <full_expr> ::= number # <expr>
+                      | <expr>
+        <expr>      ::= <term> + <expr>
+                      | <term> - <expr>
+                      | <term>
+        <term>      ::= <cell> * <term>
+                      | <cell> / <term>
+                      | <cell>
+        <cell>      ::= DiceAST
+                      | number
+                      | ( <expr> )
 
     | Level | Meaning | Default |
     |-------|---------|---------|

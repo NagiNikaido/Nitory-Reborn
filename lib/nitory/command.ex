@@ -2,10 +2,52 @@ defmodule Nitory.Command do
   @moduledoc """
   Command definition and parsing.
 
-  Commands are defined with a display name, a cmd_face (literal string or
-  regex with named captures), optional arguments with predicates, and an
-  action (function or MFA tuple). `parse/3` matches raw input text against
-  the cmd_face and extracts captured groups and optional arguments.
+  Commands are defined with a display name, a cmd_face, optional arguments,
+  and an action. `parse/3` matches raw input text against the cmd_face and
+  extracts captured groups and optional arguments.
+
+  ## Syntax (BNF)
+
+      <command>  ::= display_name | hidden  ; mutually exclusive
+      <face>     ::= <literal> | (<regex>, <binding_list>)
+      <option>   ::= <opt_name> [<predicator>] [optional] | :rest
+      <action>   ::= <function> | <mfa>
+
+      <args>     ::= <face_arg> [<opt_arg>*]
+      <face_arg> ::= string matching <literal> | regex capturing <binding_list>
+      <opt_arg>  ::= <arg_value> | " "  ; skipped if optional and no arg
+
+  ## Parsing Algorithm
+
+  1. Extract the first element of `raw_args` as `<face_arg>`.
+  2. Match `<face_arg>` against `cmd_face`:
+     - For literal strings: exact match required.
+     - For `{regex, binding_list}`: apply `Regex.named_captures`, which
+       yields `%{key => value}` bindings (converted to keyword list).
+  3. Gate on `msg_type`: if `cmd.msg_type` is set, reject mismatched
+     session types (`:private` vs `:group`).
+  4. Consume remaining `raw_args` left-to-right against `cmd.options`:
+     - For each `%Option{name:, predicator:, optional:}`:
+       - If an argument is present and passes `predicator` (or predicator
+         is nil), consume it and bind to `name`.
+       - If no argument remains: skip the option if `optional` is true,
+         otherwise return `{:wrong_argument, ...}`.
+       - If an argument is present but FAILS predicator, return
+         `{:wrong_argument, ...}`.
+     - `:rest` consumes ALL remaining arguments as-is and MUST be the
+       last option; any option after `:rest` returns `{:options_after_rest, ...}`.
+     - Surplus arguments after all options are consumed return
+       `{:unparsed_arguments, ...}`.
+
+  ## Errors
+
+  | Error | Meaning |
+  |-------|---------|
+  | `:command_face_not_match` | `<face_arg>` did not match `cmd_face` |
+  | `{:wrong_msg_type, cmd, expected}` | Session type mismatch |
+  | `{:wrong_argument, cmd, opt_name}` | Argument failed predicate |
+  | `{:unparsed_arguments, cmd, args}` | Extra arguments remain |
+  | `{:options_after_rest, cmd}` | Option defined after `:rest` |
 
   ## Options
 
