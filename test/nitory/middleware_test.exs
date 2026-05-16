@@ -1,126 +1,169 @@
-defmodule Nitory.MiddlewareTest.TestModule do
-  import Logger
-
-  def call(ctx, next, a, b, c) do
-    Logger.info("I'm another middleware, currently in #{__MODULE__}.")
-
-    Logger.info(
-      "I have three other arguments, a: #{inspect(a)}, b: #{inspect(b)}, c: #{inspect(c)}"
-    )
-
-    Nitory.Middleware.run(ctx, next)
-  end
-end
-
-defmodule Nitory.MiddlewareTest.TestGenServer do
-  use GenServer
-
-  import Logger
-
-  def start_link(init_arg) do
-    GenServer.start_link(__MODULE__, init_arg, name: __MODULE__)
-  end
-
-  @impl true
-  def init(_init_arg) do
-    {:ok, {}}
-  end
-
-  @impl true
-  def handle_call({:feed, ctx, next, a, b}, _from, state) do
-    Logger.info("I'm a middlware-genserver, currently in #{__MODULE__}")
-    Logger.info("I have two arguments, a: #{inspect(a)}, b: #{inspect(b)}")
-
-    Nitory.Middleware.run(ctx, next)
-    {:reply, :ok, state}
-  end
-
-  def feed(ctx, next, a, b), do: GenServer.call(__MODULE__, {:feed, ctx, next, a, b})
-end
-
 defmodule Nitory.MiddlewareTest do
   use ExUnit.Case, async: false
 
-  import Logger
-
   setup do
     mw = start_supervised!(Nitory.Middleware)
-    start_supervised!(Nitory.MiddlewareTest.TestGenServer)
-    {:ok, mw: mw}
+    {:ok, agent} = Agent.start_link(fn -> [] end)
+    {:ok, mw: mw, agent: agent}
   end
 
-  test "middlewares", context do
-    mw = context[:mw]
+  defp trace(agent, tag) do
+    Agent.update(agent, fn list -> [tag | list] end)
+  end
 
-    # 1
-    dispose_1 =
-      Nitory.Middleware.register(mw, fn _ctx, _next ->
-        Logger.info("I'm middleware 1. Everything ends here.")
-        :ok
-      end)
+  defp get_trace(agent) do
+    Agent.get(agent, &Enum.reverse/1)
+  end
 
-    # 2 1
-    _dispose_2 =
-      Nitory.Middleware.register(
-        mw,
-        fn ctx, next ->
-          Logger.info("I'm middleware 2. Let's see what's in the ctx.")
-          Logger.info(inspect(ctx, pretty: true))
-          Nitory.Middleware.run(ctx, next)
-        end,
-        :prepend
-      )
+  test "middlewares execute in registration order", %{mw: mw, agent: agent} do
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :a)
+      Nitory.Middleware.run(ctx, next)
+    end)
 
-    # 3 2 1
-    dispose_3 =
-      Nitory.Middleware.register(
-        mw,
-        Nitory.MiddlewareTest.TestModule,
-        :call,
-        [1, "a", %{"t" => "d"}],
-        :prepend
-      )
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :b)
+      Nitory.Middleware.run(ctx, next)
+    end)
 
-    # 3 2 1 4
-    _dispose_4 =
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :c)
+      Nitory.Middleware.run(ctx, next)
+    end)
+
+    Nitory.Middleware.excute(mw, {})
+
+    assert [:a, :b, :c] = get_trace(agent)
+  end
+
+  test "prepend inserts before existing middleware", %{mw: mw, agent: agent} do
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :b)
+      Nitory.Middleware.run(ctx, next)
+    end)
+
+    Nitory.Middleware.register(
+      mw,
+      fn ctx, next ->
+        trace(agent, :a)
+        Nitory.Middleware.run(ctx, next)
+      end,
+      :prepend
+    )
+
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :c)
+      Nitory.Middleware.run(ctx, next)
+    end)
+
+    Nitory.Middleware.excute(mw, {})
+
+    assert [:a, :b, :c] = get_trace(agent)
+  end
+
+  test "dispose removes middleware from chain", %{mw: mw, agent: agent} do
+    dispose_b =
       Nitory.Middleware.register(mw, fn ctx, next ->
-        Logger.info("I'm middleware 4. I'm covered by middleware 1.")
-        Logger.info("If I'm seen, middleware 1 has been disposed.")
+        trace(agent, :b)
         Nitory.Middleware.run(ctx, next)
       end)
 
-    # 5 3 2 1 4
-    dispose_5 =
-      Nitory.Middleware.register(
-        mw,
-        Nitory.MiddlewareTest.TestGenServer,
-        :feed,
-        [2, "b"],
-        :prepend
-      )
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :a)
+      Nitory.Middleware.run(ctx, next)
+    end, :prepend)
 
-    # 5 3 2 1 4 6
-    _dispose_6 =
-      Nitory.Middleware.register(
-        mw,
-        fn ctx, next ->
-          dispose_5.()
-          Nitory.Middleware.run(ctx, next)
-        end
-      )
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :c)
+      Nitory.Middleware.run(ctx, next)
+    end)
 
-    Logger.info(Nitory.Middleware.list(mw))
+    Nitory.Middleware.excute(mw, {})
+    agent |> get_trace() |> Enum.each(fn _ -> nil end)
+
+    dispose_b.()
+    Agent.update(agent, fn _ -> [] end)
+
+    Nitory.Middleware.excute(mw, {})
+    assert [:a, :c] = get_trace(agent)
+  end
+
+  test "short-circuit stops chain execution", %{mw: mw, agent: agent} do
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :a)
+      Nitory.Middleware.run(ctx, next)
+    end, :prepend)
+
+    Nitory.Middleware.register(mw, fn _ctx, _next ->
+      trace(agent, :stop)
+      :ok
+    end, :prepend)
+
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :b)
+      Nitory.Middleware.run(ctx, next)
+    end)
 
     Nitory.Middleware.excute(mw, {})
 
-    # 5 3 2 4 6
-    dispose_1.()
+    assert [:stop] = get_trace(agent)
+  end
 
-    # After this, should be 3 2 4 6.
+  test "self-disposing middleware removes itself during execution", %{mw: mw, agent: agent} do
+    dispose_a =
+      Nitory.Middleware.register(mw, fn ctx, next ->
+        trace(agent, :a)
+        Nitory.Middleware.run(ctx, next)
+      end, :prepend)
+
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, :b)
+      Nitory.Middleware.run(ctx, next)
+    end)
+
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      dispose_a.()
+      trace(agent, :disposer)
+      Nitory.Middleware.run(ctx, next)
+    end, :prepend)
+
     Nitory.Middleware.excute(mw, {})
+    agent |> get_trace() |> Enum.each(fn _ -> nil end)
 
-    dispose_3.()
-
+    Agent.update(agent, fn _ -> [] end)
     Nitory.Middleware.excute(mw, {})
+    assert [:disposer, :b] = get_trace(agent)
+  end
+
+  test "excute! raises on {:error, reason}", %{mw: mw, agent: agent} do
+    Nitory.Middleware.register(mw, fn _ctx, _next ->
+      {:error, "boom"}
+    end)
+
+    assert catch_exit(
+             Nitory.Middleware.excute!(mw, {})
+           )
+  end
+
+  test "list returns all registered middleware", %{mw: mw} do
+    assert [] = Nitory.Middleware.list(mw)
+
+    Nitory.Middleware.register(mw, fn _ctx, _next -> :ok end)
+    Nitory.Middleware.register(mw, fn _ctx, _next -> :ok end)
+
+    assert [_a, _b] = Nitory.Middleware.list(mw)
+  end
+
+  test "middleware receives context", %{mw: mw, agent: agent} do
+    ctx = %{key: "value"}
+
+    Nitory.Middleware.register(mw, fn ctx, next ->
+      trace(agent, ctx.key)
+      Nitory.Middleware.run(ctx, next)
+    end)
+
+    Nitory.Middleware.excute(mw, ctx)
+
+    assert ["value"] = get_trace(agent)
   end
 end
