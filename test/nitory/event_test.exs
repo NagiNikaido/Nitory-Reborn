@@ -14,7 +14,7 @@ defmodule Nitory.EventTest do
         "post_type" => "meta_event",
         "meta_event_type" => "heartbeat",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "interval" => 5_000,
         "status" => %{"online" => true, "good" => true}
       }
@@ -28,7 +28,7 @@ defmodule Nitory.EventTest do
         "post_type" => "meta_event",
         "meta_event_type" => "lifecycle",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "sub_type" => "connect"
       }
 
@@ -42,15 +42,15 @@ defmodule Nitory.EventTest do
         "post_type" => "message",
         "message_type" => "private",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "message_id" => 100,
-        "user_id" => 67890,
+        "user_id" => 67_890,
         "message" => "hello",
-        "sender" => %{"user_id" => 67890, "nickname" => "TestUser"},
+        "sender" => %{"user_id" => 67_890, "nickname" => "TestUser"},
         "sub_type" => "friend"
       }
 
-      assert {:ok, %PrivateMessage{user_id: 67890, message: "hello"}} = Event.cast(payload)
+      assert {:ok, %PrivateMessage{user_id: 67_890, message: "hello"}} = Event.cast(payload)
     end
 
     test "group message" do
@@ -58,7 +58,7 @@ defmodule Nitory.EventTest do
         "post_type" => "message",
         "message_type" => "group",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "message_id" => 200,
         "user_id" => 111,
         "group_id" => 999,
@@ -77,7 +77,7 @@ defmodule Nitory.EventTest do
         "post_type" => "notice",
         "notice_type" => "group_admin",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "group_id" => 999,
         "user_id" => 111,
         "sub_type" => "set"
@@ -91,7 +91,7 @@ defmodule Nitory.EventTest do
         "post_type" => "notice",
         "notice_type" => "group_ban",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "group_id" => 999,
         "operator_id" => 111,
         "user_id" => 222,
@@ -107,7 +107,7 @@ defmodule Nitory.EventTest do
         "post_type" => "notice",
         "notice_type" => "group_increase",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "group_id" => 999,
         "user_id" => 333,
         "operator_id" => 111,
@@ -122,7 +122,7 @@ defmodule Nitory.EventTest do
         "post_type" => "notice",
         "notice_type" => "friend_add",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "user_id" => 444
       }
 
@@ -136,7 +136,7 @@ defmodule Nitory.EventTest do
         "post_type" => "request",
         "request_type" => "friend",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "user_id" => 555,
         "comment" => "Hello!",
         "flag" => "abc123"
@@ -150,7 +150,7 @@ defmodule Nitory.EventTest do
         "post_type" => "request",
         "request_type" => "group",
         "time" => 1_680_000_000,
-        "self_id" => 12345,
+        "self_id" => 12_345,
         "user_id" => 666,
         "comment" => "pls",
         "flag" => "def456",

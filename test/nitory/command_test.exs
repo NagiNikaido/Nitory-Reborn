@@ -16,10 +16,12 @@ defmodule Nitory.CommandTest do
       action: fn -> :ok end
     }
 
-    IO.inspect(Nitory.Command.parse(command, ["r+3", "asd"], msg: %{message_type: :group}))
-    IO.inspect(Nitory.Command.parse(command, ["rh10", "exf"], msg: %{message_type: :group}))
-    IO.inspect(Nitory.Command.parse(command, ["rh20+3", "df"], msg: %{message_type: :group}))
-    # IO.inspect(Nitory.Command.parse_optional_arguments([:rest], ["asd"], []))
-    # IO.inspect(Nitory.Command.parse_optional_arguments(command.options, ["asd"], []))
+    assert {:ok, _} = Nitory.Command.parse(command, ["r+3", "asd"], msg: %{message_type: :group})
+    assert {:ok, _} = Nitory.Command.parse(command, ["rh10", "exf"], msg: %{message_type: :group})
+
+    assert {:error, :command_face_not_match} =
+             Nitory.Command.parse(command, ["rh20+3", "df"], msg: %{message_type: :group})
+
+    assert {:error, _} = Nitory.Command.parse(command, ["unknown"], msg: %{message_type: :group})
   end
 end

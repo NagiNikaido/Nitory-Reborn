@@ -21,30 +21,32 @@ defmodule Nitory.Plugins.Dice do
       try do
         normalized_expr = if expr == nil, do: DiceAST.to_string(default_dice), else: expr
 
-        with {:ok, ast} <- DiceExpr.parse(normalized_expr, default_dice) do
-          %{full_lit: lit, formatted_res: fmt_res} = DiceExpr.eval(ast)
-          default_nick = msg.sender.nickname
-          user_id = msg.user_id
+        case DiceExpr.parse(normalized_expr, default_dice) do
+          {:ok, ast} ->
+            %{full_lit: lit, formatted_res: fmt_res} = DiceExpr.eval(ast)
+            default_nick = msg.sender.nickname
+            user_id = msg.user_id
 
-          nick =
-            if state.session_type == :group do
-              Nitory.Nickname.get_nick(user_id, state.session_id, default_nick)
+            nick =
+              if state.session_type == :group do
+                Nitory.Nickname.get_nick(user_id, state.session_id, default_nick)
+              else
+                default_nick
+              end
+
+            reply = ~s'#{nick} 掷骰 #{lit}#{if desc == nil, do: "", else: " (#{desc})"}:\n#{fmt_res}'
+
+            if hidden do
+              GenServer.cast(
+                Nitory.ApiHandler,
+                {:send_private_msg, %{user_id: user_id, message: reply}}
+              )
             else
-              default_nick
+              {:ok, reply}
             end
 
-          reply = ~s'#{nick} 掷骰 #{lit}#{if desc == nil, do: "", else: " (#{desc})"}:\n#{fmt_res}'
-
-          if hidden do
-            GenServer.cast(
-              Nitory.ApiHandler,
-              {:send_private_msg, %{user_id: user_id, message: reply}}
-            )
-          else
-            {:ok, reply}
-          end
-        else
-          {:error, _} -> {:error, "* 格式错误"}
+          {:error, _} ->
+            {:error, "* 格式错误"}
         end
       rescue
         ArithmeticError -> {:error, "* 算术错误"}
@@ -111,7 +113,7 @@ defmodule Nitory.Plugins.Dice do
             目标上限：每掷出一个小于等于目标上限的骰子计为一个成功数
             取高枚数：取最高的若干枚骰子
             取低枚数：取最低的若干枚骰子
-            追加目标：每掷出大于等于追加目标的结果则追加一枚骰子，若同时设定了目标上限则转为“小于等于追加目标”，其余不变
+            追加目标：每掷出大于等于追加目标的结果则追加一枚骰子，若同时设定了目标上限则转为"小于等于追加目标"，其余不变
         例：
             3d6        掷3枚d6
             2d20h1     掷2枚d20，取其中较高的1枚

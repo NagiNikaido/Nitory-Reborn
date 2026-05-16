@@ -47,8 +47,8 @@ defmodule Nitory.MessageSegmentTest do
 
   describe "Segment.At" do
     test "casts at segment with integer qq" do
-      assert {:ok, %Segment.At{data: %{qq: 12345}}} =
-               Segment.cast(%{"type" => "at", "data" => %{"qq" => 12345}})
+      assert {:ok, %Segment.At{data: %{qq: 12_345}}} =
+               Segment.cast(%{"type" => "at", "data" => %{"qq" => 12_345}})
     end
 
     test "casts at segment with string qq" do
