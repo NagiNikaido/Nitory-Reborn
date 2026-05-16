@@ -47,7 +47,7 @@ defmodule Nitory.MixProject do
       {:depscheck, "~> 1.0.11", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.40", only: :dev, runtime: false, warn_if_outdated: true},
-      {:stream_data, "~> 0.3.0"},
+      {:stream_data, "~> 1.3.0"},
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
